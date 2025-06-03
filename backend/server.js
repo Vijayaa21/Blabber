@@ -6,23 +6,16 @@ import notificationRoutes from "./routes/notification.route.js";
 import dotenv from"dotenv";
 import connectMongoDB from "./db/connectMongoDB.js";
 import cookieParser from "cookie-parser";
-import {v2 as cloudinary} from "cloudinary";
 
 dotenv.config()
 
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-})
 const app =  express();
 
 const PORT = process.env.PORT || 5000
 
 console.log(process.env.MONGO_URI)
 
-app.use(express.json());
+app.use(express.json({limit: "10mb"}));
 app.use(express.urlencoded({ extended:true }));
 
 app.use(cookieParser());
