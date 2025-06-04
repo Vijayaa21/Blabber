@@ -42,18 +42,50 @@ function App() {
 	}
 
 	return (
-		<div className='flex max-w-6xl mx-auto'>
-      {authUser && <Sidebar />}
-			<Routes>
-				<Route path='/' element={authUser ? <HomePage /> : <Navigate to='/login' />} />
-				<Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to='/' />} />
-				<Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to='/' />} />
-				<Route path='/notifications' element={authUser ? <NotificationPage /> : <Navigate to='/login' />} />
-				<Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to='/login' />} />
-			</Routes>
-			{authUser && <RightPanel />}
-			<Toaster />
-		</div>
+		<div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
+  {/* Sidebar */}
+  {authUser && (
+    
+      <Sidebar />
+    
+  )}
+
+  {/* Main Content */}
+  <main className="flex-1 p-4 overflow-y-auto">
+    <Routes>
+      <Route
+        path="/"
+        element={authUser ? <HomePage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/login"
+        element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/signup"
+        element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/notifications"
+        element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/profile/:username"
+        element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+      />
+    </Routes>
+  </main>
+
+  {/* Right Panel */}
+  {authUser && (
+    <aside className="w-72 hidden lg:block p-4">
+      <RightPanel />
+    </aside>
+  )}
+
+  <Toaster position="top-right" />
+</div>
+
 	);
 }
 

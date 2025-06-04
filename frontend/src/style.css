@@ -1,34 +1,44 @@
 @import "tailwindcss";
+
 @plugin "daisyui/theme" {
   name: "dim";
   default: true;
   prefersdark: false;
   color-scheme: "dark";
-  --color-base-100: oklch(13% 0.028 261.692);
-  --color-base-200: oklch(21% 0.034 264.665);
-  --color-base-300: oklch(27% 0.033 256.848);
-  --color-base-content: oklch(96% 0.003 264.542);
-  --color-primary: oklch(76% 0.233 130.85);
-  --color-primary-content: oklch(98% 0.031 120.757);
-  --color-secondary: oklch(70% 0.213 47.604);
-  --color-secondary-content: oklch(98% 0.016 73.684);
-  --color-accent: oklch(76% 0.188 70.08);
-  --color-accent-content: oklch(98% 0.022 95.277);
-  --color-neutral: oklch(13% 0.028 261.692);
-  --color-neutral-content: oklch(98% 0.002 247.839);
-  --color-info: oklch(54% 0.245 262.881);
-  --color-info-content: oklch(97% 0.014 254.604);
-  --color-success: oklch(64% 0.2 131.684);
-  --color-success-content: oklch(98% 0.031 120.757);
-  --color-warning: oklch(66% 0.179 58.318);
-  --color-warning-content: oklch(98% 0.022 95.277);
-  --color-error: oklch(59% 0.249 0.584);
-  --color-error-content: oklch(97% 0.014 343.198);
+
+  --color-base-100: #0f0c29; /* Deep Blue */
+  --color-base-200: #302b63; /* Indigo Base */
+  --color-base-300: #24243e; /* Blue-Violet Overlay */
+  --color-base-content: #f1efff; /* Soft text */
+
+  --color-primary: #7B2FF7; /* Vivid Purple */
+  --color-primary-content: #fefaff; /* Light text on purple */
+
+  --color-secondary: #4A00E0; /* Deep Indigo */
+  --color-secondary-content: #ffffff;
+
+  --color-accent: #8E2DE2; /* Purple Gradient Edge */
+  --color-accent-content: #ffffff;
+
+  --color-neutral: #0f0c29;
+  --color-neutral-content: #fefefe;
+
+  --color-info: #4a6cf7;
+  --color-info-content: #e9f3ff;
+
+  --color-success: #43e97b;
+  --color-success-content: #ffffff;
+
+  --color-warning: #f5af19;
+  --color-warning-content: #1e1e1e;
+
+  --color-error: #ff4e50;
+  --color-error-content: #fff1f1;
+
   --radius-selector: 0rem;
   --radius-field: 0.25rem;
   --radius-box: 0.5rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
+
   --border: 1px;
   --depth: 1;
   --noise: 1;

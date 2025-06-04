@@ -5,11 +5,16 @@ import {
 } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegBookmark } from "react-icons/fa6";
+import { GiTalk, GiBookmark, GiTrashCan } from "react-icons/gi";
+import { MdFavorite } from "react-icons/md";
+import { IoRepeatSharp } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
+import { formatPostDate } from "../../utils/date";
+
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
@@ -21,40 +26,58 @@ const Post = ({ post }) => {
 	const postOwner = post.user;
 	const isLiked = post.likes.includes(authUser._id);
 	const isMyPost = post.user && authUser._id === post.user._id;
-	const formattedDate = "1h";
+	const formattedDate = formatPostDate(post.createdAt);
 
-	// DELETE post
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
-			const res = await fetch(`/api/posts/${post._id}`, { method: "DELETE" });
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error || "Something went wrong");
-			return data;
+			try {
+				const res = await fetch(`/api/posts/${post._id}`, {
+					method: "DELETE",
+				});
+				const data = await res.json();
+
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
 		},
 		onSuccess: () => {
-			toast.success("Post deleted");
+			toast.success("Post deleted successfully");
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 		},
-		onError: (err) => toast.error(err.message),
 	});
 
-	// LIKE post
 	const { mutate: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
-			const res = await fetch(`/api/posts/like/${post._id}`, { method: "POST" });
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error || "Something went wrong");
-			return data;
+			try {
+				const res = await fetch(`/api/posts/like/${post._id}`, {
+					method: "POST",
+				});
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
 		},
 		onSuccess: (updatedLikes) => {
 			queryClient.setQueryData(["posts"], (oldData) => {
-				if (!oldData || !Array.isArray(oldData)) return oldData;
-				return oldData.map((p) =>
-					p._id === post._id ? { ...p, likes: updatedLikes } : p
-				);
+				return oldData.map((p) => {
+					if (p._id === post._id) {
+						return { ...p, likes: updatedLikes };
+					}
+					return p;
+				});
 			});
 		},
-		onError: (err) => toast.error(err.message),
+		onError: (error) => {
+			toast.error(error.message);
+		},
 	});
 
 	// COMMENT on post with optimistic update
@@ -159,7 +182,7 @@ const Post = ({ post }) => {
 							{isDeleting ? (
 								<LoadingSpinner size='sm' />
 							) : (
-								<FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />
+								<GiTrashCan className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />
 							)}
 						</span>
 					)}
@@ -183,7 +206,7 @@ const Post = ({ post }) => {
 							className='flex gap-1 items-center cursor-pointer group'
 							onClick={() => setIsCommentDialogOpen(true)}
 						>
-							<FaRegComment className='w-4 h-4  text-slate-500 group-hover:text-sky-400' />
+							<GiTalk className='w-4 h-4  text-slate-500 group-hover:text-sky-400' />
 							<span className='text-sm text-slate-500 group-hover:text-sky-400'>
 								{post.comments.length}
 							</span>
@@ -230,29 +253,29 @@ const Post = ({ post }) => {
 										)}
 									</div>
 									<form onSubmit={handlePostComment} className='flex gap-2'>
-  <textarea
-    className='flex-grow p-2 rounded bg-gray-800 text-white resize-none border border-gray-700 focus:outline-none focus:border-sky-500'
-    placeholder='Add a comment...'
-    value={comment}
-    onChange={(e) => setComment(e.target.value)}
-    rows={2}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        if (comment.trim().length > 0) {
-          handlePostComment(e);
-        }
-      }
-    }}
-  />
-  <button
-    type='submit'
-    className='btn btn-primary rounded px-4 flex items-center justify-center'
-    disabled={isCommenting}
-  >
-    {isCommenting ? <LoadingSpinner size='sm' /> : "Post"}
-  </button>
-</form>
+								<textarea
+									className='flex-grow p-2 rounded bg-gray-800 text-white resize-none border border-gray-700 focus:outline-none focus:border-sky-500'
+									placeholder='Add a comment...'
+									value={comment}
+									onChange={(e) => setComment(e.target.value)}
+									rows={2}
+									onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										if (comment.trim().length > 0) {
+										handlePostComment(e);
+										}
+									}
+									}}
+								/>
+								<button
+									type='submit'
+									className='btn btn-primary rounded px-4 flex items-center justify-center'
+									disabled={isCommenting}
+								>
+									{isCommenting ? <LoadingSpinner size='sm' /> : "Post"}
+								</button>
+								</form>
 
 								</div>
 							</div>
@@ -260,7 +283,7 @@ const Post = ({ post }) => {
 
 						{/* Repost */}
 						<div className='flex gap-1 items-center group cursor-pointer'>
-							<BiRepost className='w-6 h-6 text-slate-500 group-hover:text-green-500' />
+							<IoRepeatSharp className='w-6 h-6 text-slate-500 group-hover:text-green-500' />
 							<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>
 						</div>
 
@@ -269,7 +292,7 @@ const Post = ({ post }) => {
 							{isLiking ? (
 								<LoadingSpinner size='sm' />
 							) : (
-								<FaRegHeart
+								<MdFavorite
 									className={`w-4 h-4 ${
 										isLiked ? "text-pink-500" : "text-slate-500 group-hover:text-pink-500"
 									}`}
@@ -287,7 +310,7 @@ const Post = ({ post }) => {
 
 					{/* Bookmark */}
 					<div className='flex w-1/3 justify-end gap-2 items-center'>
-						<FaRegBookmark className='w-4 h-4 text-slate-500 cursor-pointer' />
+						<GiBookmark className='w-4 h-4 text-slate-500 cursor-pointer' />
 					</div>
 				</div>
 			</div>

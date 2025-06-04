@@ -93,18 +93,18 @@ const ProfilePage = () => {
 							{/* COVER IMG */}
 							<div className='relative'>
 							{/* Cover Image */}
-							<div className='h-56 w-full relative'>
+							<div className='h-56 w-full relative group'>
 								<img
-								src={coverImg || user?.coverImg || "/cover.png"}
-								className='h-full w-full object-cover rounded-b-xl shadow-sm'
-								alt='cover'
+									src={coverImg || user?.coverImg || "/cover.png"}
+									className='h-full w-full object-cover rounded-b-xl shadow-sm'
+									alt='cover'
 								/>
 								{isMyProfile && (
 									<div
-										className='absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200'
-										onClick={() => coverImgRef.current.click()}
+									className='absolute bottom-2 right-2 bg-primary p-1 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300'
+									onClick={() => coverImgRef.current.click()}
 									>
-										<MdEdit className='w-5 h-5 text-white' />
+									<MdEdit className='text-white text-lg' />
 									</div>
 								)}
 
@@ -122,27 +122,26 @@ const ProfilePage = () => {
 									ref={profileImgRef}
 									onChange={(e) => handleImgChange(e, "profileImg")}
 								/>
-							</div>
-
+								</div>
 							{/* Profile Avatar */}
 							<div className='absolute -bottom-14 left-6 z-10'>
-  <div className='relative w-[110px] h-[110px] rounded-full border-[4px] border-black overflow-hidden group/avatar shadow-lg'>
-    <img
-      src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
-      alt="Profile"
-      className='w-full h-full object-cover'
-    />
-    {isMyProfile && (
-      <div
-        className='absolute bottom-2 right-2 bg-primary p-1 rounded-full cursor-pointer opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300'
-        onClick={() => profileImgRef.current.click()}
-        title="Edit Profile Picture"
-      >
-        <MdEdit className='text-white text-lg' />
-      </div>
-    )}
-  </div>
-</div>
+								<div className='relative w-[110px] h-[110px] rounded-full border-[4px] border-black overflow-hidden group/avatar shadow-lg'>
+									<img
+									src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+									alt="Profile"
+									className='w-full h-full object-cover'
+									/>
+									{isMyProfile && (
+									<div
+										className='absolute bottom-2 right-2 bg-primary p-1 rounded-full cursor-pointer opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300'
+										onClick={() => profileImgRef.current.click()}
+										title="Edit Profile Picture"
+									>
+										<MdEdit className='text-white text-lg' />
+									</div>
+									)}
+								</div>
+								</div>
 
 							</div>
 
