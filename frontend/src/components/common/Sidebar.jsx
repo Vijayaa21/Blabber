@@ -76,11 +76,14 @@ const Sidebar = () => {
 						to={`/profile/${authUser.username}`}
 						className='mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full'
 					>
-						<div className='avatar hidden md:inline-flex'>
-							<div className='w-8 rounded-full'>
-								<img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+						<div className='w-8 h-8 rounded-full overflow-hidden'>
+							<img
+								src={authUser?.profileImg || "/avatar-placeholder.png"}
+								alt="Profile"
+								className='w-full h-full object-cover block'
+							/>
 							</div>
-						</div>
+
 						<div className='flex justify-between flex-1'>
 							<div className='hidden md:block'>
 								<p className='text-white font-bold text-sm w-20 truncate'>{authUser?.fullName}</p>

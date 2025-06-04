@@ -74,21 +74,29 @@ const NotificationPage = () => {
 				{notifications?.length === 0 && <div className='text-center p-4 font-bold'>No notifications 🤔</div>}
 				{notifications?.map((notification) => (
 					<div className='border-b border-gray-700' key={notification._id}>
-						<div className='flex gap-2 p-4'>
-							{notification.type === "follow" && <FaUser className='w-7 h-7 text-primary' />}
-							{notification.type === "like" && <FaHeart className='w-7 h-7 text-red-500' />}
-							<Link to={`/profile/${notification.from.username}`}>
-								<div className='avatar'>
-									<div className='w-8 rounded-full'>
-										<img src={notification.from.profileImg || "/avatar-placeholder.png"} />
-									</div>
-								</div>
-								<div className='flex gap-1'>
-									<span className='font-bold'>@{notification.from.username}</span>{" "}
-									{notification.type === "follow" ? "followed you" : "liked your post"}
-								</div>
-							</Link>
+						<div className='flex items-center gap-3 p-4'>
+						{/* Notification icon */}
+						{notification.type === "follow" && <FaUser className='w-7 h-7 text-primary flex-shrink-0' />}
+						{notification.type === "like" && <FaHeart className='w-7 h-7 text-red-500 flex-shrink-0' />}
+
+						{/* Profile picture and text */}
+						<Link to={`/profile/${notification.from.username}`} className='flex items-center gap-2 no-underline text-inherit'>
+							<div className='w-8 h-8 rounded-full overflow-hidden flex-shrink-0'>
+							<img
+								src={notification.from.profileImg || "/avatar-placeholder.png"}
+								alt="Profile"
+								className='w-full h-full object-cover block'
+							/>
+							</div>
+							<div className='font-semibold'>
+							<span>@{notification.from.username}</span>{" "}
+							<span className='font-normal'>
+								{notification.type === "follow" ? "followed you" : "liked your post"}
+							</span>
+							</div>
+						</Link>
 						</div>
+
 					</div>
 				))}
 			</div>

@@ -91,11 +91,13 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							{/* COVER IMG */}
-							<div className='relative group/cover'>
+							<div className='relative'>
+							{/* Cover Image */}
+							<div className='h-56 w-full relative'>
 								<img
-									src={coverImg || user?.coverImg || "/cover.png"}
-									className='h-52 w-full object-cover'
-									alt='cover image'
+								src={coverImg || user?.coverImg || "/cover.png"}
+								className='h-full w-full object-cover rounded-b-xl shadow-sm'
+								alt='cover'
 								/>
 								{isMyProfile && (
 									<div
@@ -120,22 +122,31 @@ const ProfilePage = () => {
 									ref={profileImgRef}
 									onChange={(e) => handleImgChange(e, "profileImg")}
 								/>
-								{/* USER AVATAR */}
-								<div className='avatar absolute -bottom-16 left-4'>
-									<div className='w-32 rounded-full relative group/avatar'>
-										<img src={profileImg || user?.profileImg || "/avatar-placeholder.png"} />
-										<div className='absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer'>
-											{isMyProfile && (
-												<MdEdit
-													className='w-4 h-4 text-white'
-													onClick={() => profileImgRef.current.click()}
-												/>
-											)}
-										</div>
-									</div>
-								</div>
 							</div>
-							<div className='flex justify-end px-4 mt-5'>
+
+							{/* Profile Avatar */}
+							<div className='absolute -bottom-14 left-6 z-10'>
+  <div className='relative w-[110px] h-[110px] rounded-full border-[4px] border-black overflow-hidden group/avatar shadow-lg'>
+    <img
+      src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+      alt="Profile"
+      className='w-full h-full object-cover'
+    />
+    {isMyProfile && (
+      <div
+        className='absolute bottom-2 right-2 bg-primary p-1 rounded-full cursor-pointer opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300'
+        onClick={() => profileImgRef.current.click()}
+        title="Edit Profile Picture"
+      >
+        <MdEdit className='text-white text-lg' />
+      </div>
+    )}
+  </div>
+</div>
+
+							</div>
+
+							<div className='flex justify-end '>
 								{isMyProfile && <EditProfileModal authUser={authUser} />}
 								{!isMyProfile && (
 									<button
@@ -161,66 +172,50 @@ const ProfilePage = () => {
 								)}
 							</div>
 
-							<div className='flex flex-col gap-4 mt-14 px-4'>
-								<div className='flex flex-col'>
-									<span className='font-bold text-lg'>{user?.fullName}</span>
-									<span className='text-sm text-slate-500'>@{user?.username}</span>
-									<span className='text-sm my-1'>{user?.bio}</span>
+							<div className='mt-20 px-6 pb-4 border-b border-gray-700'>
+							<div className='flex flex-col gap-1'>
+								<h2 className='font-bold text-xl'>{user?.fullName}</h2>
+								<span className='text-sm text-gray-400'>@{user?.username}</span>
+								<p className='mt-2 text-sm text-white'>{user?.bio}</p>
+
+								<div className='flex gap-4 mt-2 flex-wrap text-sm text-gray-400'>
+								{user?.link && (
+									<a href={user?.link} target='_blank' rel='noreferrer' className='flex items-center gap-1 hover:underline text-blue-400'>
+									<FaLink /> {user?.link}
+									</a>
+								)}
+								<span className='flex items-center gap-1'>
+									<IoCalendarOutline /> Joined {memberSinceDate}
+								</span>
 								</div>
 
-								<div className='flex gap-2 flex-wrap'>
-									{user?.link && (
-										<div className='flex gap-1 items-center '>
-											<>
-												<FaLink className='w-3 h-3 text-slate-500' />
-												<a
-													href='https://youtube.com/@asaprogrammer_'
-													target='_blank'
-													rel='noreferrer'
-													className='text-sm text-blue-500 hover:underline'
-												>
-													{/* Updated this after recording the video. I forgot to update this while recording, sorry, thx. */}
-													{user?.link}
-												</a>
-											</>
-										</div>
-									)}
-									<div className='flex gap-2 items-center'>
-										<IoCalendarOutline className='w-4 h-4 text-slate-500' />
-										<span className='text-sm text-slate-500'>{memberSinceDate}</span>
-									</div>
-								</div>
-								<div className='flex gap-2'>
-									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user?.following.length}</span>
-										<span className='text-slate-500 text-xs'>Following</span>
-									</div>
-									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user?.followers.length}</span>
-										<span className='text-slate-500 text-xs'>Followers</span>
-									</div>
+								<div className='flex gap-5 mt-2 text-sm'>
+								<span>
+									<span className='font-semibold'>{user?.following.length}</span> <span className='text-gray-400'>Following</span>
+								</span>
+								<span>
+									<span className='font-semibold'>{user?.followers.length}</span> <span className='text-gray-400'>Followers</span>
+								</span>
 								</div>
 							</div>
-							<div className='flex w-full border-b border-gray-700 mt-4'>
-								<div
-									className='flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer'
-									onClick={() => setFeedType("posts")}
-								>
-									Posts
-									{feedType === "posts" && (
-										<div className='absolute bottom-0 w-10 h-1 rounded-full bg-primary' />
-									)}
-								</div>
-								<div
-									className='flex justify-center flex-1 p-3 text-slate-500 hover:bg-secondary transition duration-300 relative cursor-pointer'
-									onClick={() => setFeedType("likes")}
-								>
-									Likes
-									{feedType === "likes" && (
-										<div className='absolute bottom-0 w-10  h-1 rounded-full bg-primary' />
-									)}
-								</div>
 							</div>
+							<div className='flex w-full border-b border-gray-800 text-sm font-medium mt-4 px-6'>
+								{["posts", "likes"].map((type) => (
+									<div
+									key={type}
+									onClick={() => setFeedType(type)}
+									className={`flex-1 text-center p-3 cursor-pointer relative transition-all ${
+										feedType === type ? "text-primary font-bold" : "text-gray-500 hover:text-white"
+									}`}
+									>
+									{type.charAt(0).toUpperCase() + type.slice(1)}
+									{feedType === type && (
+										<div className='absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-primary rounded-full' />
+									)}
+									</div>
+								))}
+								</div>
+
 						</>
 					)}
 
