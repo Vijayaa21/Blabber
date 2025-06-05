@@ -38,7 +38,9 @@ const ProfilePage = () => {
 		queryKey: ["userProfile"],
 		queryFn: async () => {
 			try {
-				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile/${username}`);
+				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile/${username}`, {
+          		credentials: "include",
+        		});
 				const data = await res.json();
 				if (!res.ok) {
 					throw new Error(data.error || "Something went wrong");
