@@ -78,7 +78,7 @@ function App() {
 
   {/* Right Panel */}
   {authUser && (
-    <aside className="w-72 hidden lg:block p-4">
+    <aside className="w-76 hidden lg:block p-2">
       <RightPanel />
     </aside>
   )}

@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 import XSvg from "../../../components/svgs/X";
-
-import { MdOutlineMail } from "react-icons/md";
+import { MdOutlineMail, MdPassword } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
-import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
+const defaultProfile = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 const SignUpPage = () => {
 	const [formData, setFormData] = useState({
@@ -17,31 +17,27 @@ const SignUpPage = () => {
 		username: "",
 		fullName: "",
 		password: "",
+		profileImg: defaultProfile,
 	});
+
 	const { mutate, isError, isPending, error } = useMutation({
-		mutationFn: async ({ email, username, fullName, password }) => {
+		mutationFn: async (formData) => {
 			try {
-				const res = await fetch("api/auth/signup", {
+				const res = await fetch("/api/auth/signup", {
 					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ email, username, fullName, password })
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(formData),
 				});
 				const data = await res.json();
-				if (data.error) {
-					throw new Error(data.error);
-				}
-				console.log(data);
+				if (data.error) throw new Error(data.error);
 				return data;
 			} catch (error) {
 				toast.error(error.message);
 			}
 		},
-		onSuccess: () => {
-			toast.success("Account created successfully");
-		},
-	})
+		onSuccess: () => toast.success("Account created successfully"),
+	});
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		mutate(formData);
@@ -51,74 +47,127 @@ const SignUpPage = () => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	
+	const handleImageChange = async (e) => {
+		const file = e.target.files[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+		reader.onloadend = () => {
+			setFormData(prev => ({ ...prev, profileImg: reader.result }));
+		};
+	};
 
 	return (
-		<div className='max-w-screen-xl mx-auto flex h-screen px-10'>
-			<div className='flex-1 hidden lg:flex items-center  justify-center'>
-				<XSvg className=' lg:w-2/3 fill-white' />
-			</div>
-			<div className='flex-1 flex flex-col justify-center items-center'>
-				<form className='lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col' onSubmit={handleSubmit}>
-					<XSvg className='w-24 lg:hidden fill-white' />
-					<h1 className='text-4xl font-extrabold text-white'>Join today.</h1>
-					<label className='input input-bordered rounded flex items-center gap-2'>
-						<MdOutlineMail />
-						<input
-							type='email'
-							className='grow'
-							placeholder='Email'
-							name='email'
-							onChange={handleInputChange}
-							value={formData.email}
+		<div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
+			<div className="w-full max-w-4xl bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 text-white">
+				<div className="flex flex-col items-center">
+					<XSvg className="w-20 mb-4 fill-white drop-shadow-lg" />
+
+					<h1 className="text-3xl font-bold mb-6">Create your account</h1>
+
+					{/* Profile Picture Upload */}
+					<div className="relative w-24 h-24 mb-6">
+						<img
+							src={formData.profileImg || defaultProfile}
+							alt="Profile"
+							className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
 						/>
-					</label>
-					<div className='flex gap-4 flex-wrap'>
-						<label className='input input-bordered rounded flex items-center gap-2 flex-1'>
-							<FaUser />
-							<input
-								type='text'
-								className='grow '
-								placeholder='Username'
-								name='username'
-								onChange={handleInputChange}
-								value={formData.username}
-							/>
-						</label>
-						<label className='input input-bordered rounded flex items-center gap-2 flex-1'>
-							<MdDriveFileRenameOutline />
-							<input
-								type='text'
-								className='grow'
-								placeholder='Full Name'
-								name='fullName'
-								onChange={handleInputChange}
-								value={formData.fullName}
-							/>
-						</label>
+						<input
+							type="file"
+							accept="image/*"
+							className="absolute inset-0 opacity-0 cursor-pointer"
+							onChange={handleImageChange}
+						/>
+						<div className="absolute bottom-0 right-0 bg-white/20 p-1 rounded-full backdrop-blur-sm text-white text-xs">
+							✏️
+						</div>
 					</div>
-					<label className='input input-bordered rounded flex items-center gap-2'>
-						<MdPassword />
-						<input
-							type='password'
-							className='grow'
-							placeholder='Password'
-							name='password'
-							onChange={handleInputChange}
-							value={formData.password}
-						/>
-					</label>
-					<button className='btn rounded-full btn-primary text-white'>{isPending ? "Loading..." : "Sign Up"}</button>
-					{isError && <p className='text-red-500'>{error.message}</p>}
-				</form>
-				<div className='flex flex-col lg:w-2/3 gap-2 mt-4'>
-					<p className='text-white text-lg'>Already have an account?</p>
-					<Link to='/login'>
-						<button className='btn rounded-full btn-primary text-white btn-outline w-full'>Sign in</button>
-					</Link>
+
+					<form
+						onSubmit={handleSubmit}
+						className="w-full max-w-md space-y-4 text-white"
+					>
+						{/* Email */}
+						<label className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg border border-white/20">
+							<MdOutlineMail className="text-xl text-purple-300" />
+							<input
+								type="email"
+								name="email"
+								placeholder="Email"
+								value={formData.email}
+								onChange={handleInputChange}
+								className="bg-transparent w-full outline-none text-white placeholder:text-white/60"
+							/>
+						</label>
+
+						{/* Username + FullName */}
+						<div className="flex gap-3 flex-wrap">
+							<label className="flex-1 flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg border border-white/20">
+								<FaUser className="text-lg text-purple-300" />
+								<input
+									type="text"
+									name="username"
+									placeholder="Username"
+									value={formData.username}
+									onChange={handleInputChange}
+									className="bg-transparent w-full outline-none text-white placeholder:text-white/60"
+								/>
+							</label>
+							<label className="flex-1 flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg border border-white/20">
+								<MdDriveFileRenameOutline className="text-lg text-purple-300" />
+								<input
+									type="text"
+									name="fullName"
+									placeholder="Full Name"
+									value={formData.fullName}
+									onChange={handleInputChange}
+									className="bg-transparent w-full outline-none text-white placeholder:text-white/60"
+								/>
+							</label>
+						</div>
+
+						{/* Password */}
+						<label className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg border border-white/20">
+							<MdPassword className="text-xl text-purple-300" />
+							<input
+								type="password"
+								name="password"
+								placeholder="Password"
+								value={formData.password}
+								onChange={handleInputChange}
+								className="bg-transparent w-full outline-none text-white placeholder:text-white/60"
+							/>
+						</label>
+
+						{/* Submit Button */}
+						<button
+							type="submit"
+							className="w-full py-3 bg-purple-600 hover:bg-purple-700 transition rounded-full shadow-lg font-semibold"
+						>
+							{isPending ? "Signing up..." : "Sign Up"}
+						</button>
+
+						{isError && (
+							<p className="text-red-400 text-sm text-center">
+								{error.message}
+							</p>
+						)}
+					</form>
+
+					{/* Link to Login */}
+					<div className="mt-6 w-full max-w-md text-center">
+						<p className="text-white text-sm">Already have an account?</p>
+						<Link to="/login">
+							<button className="w-full mt-2 py-3 border border-purple-500 text-purple-300 rounded-full hover:bg-purple-600/20 transition">
+								Sign In
+							</button>
+						</Link>
+					</div>
 				</div>
 			</div>
 		</div>
 	);
 };
+
 export default SignUpPage;

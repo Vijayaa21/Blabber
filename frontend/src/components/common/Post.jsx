@@ -1,8 +1,4 @@
-import {
-	FaRegComment,
-	FaRegHeart,
-	FaTrash,
-} from "react-icons/fa";
+
 import { BiRepost } from "react-icons/bi";
 import { FaRegBookmark } from "react-icons/fa6";
 import { GiTalk, GiBookmark, GiTrashCan } from "react-icons/gi";

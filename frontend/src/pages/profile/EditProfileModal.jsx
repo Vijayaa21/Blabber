@@ -18,89 +18,123 @@ const EditProfileModal = () => {
 	return (
 		<>
 			<button
-				className='btn btn-outline rounded-full btn-sm'
-				onClick={() => document.getElementById("edit_profile_modal").showModal()}
-			>
-				Edit profile
-			</button>
-			<dialog id='edit_profile_modal' className='modal'>
-				<div className='modal-box border rounded-md border-gray-700 shadow-md'>
-					<h3 className='font-bold text-lg my-3'>Update Profile</h3>
-					<form
-						className='flex flex-col gap-4'
-						onSubmit={(e) => {
-							e.preventDefault();
-							alert("Profile updated successfully");
-						}}
-					>
-						<div className='flex flex-wrap gap-2'>
-							<input
-								type='text'
-								placeholder='Full Name'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.fullName}
-								name='fullName'
-								onChange={handleInputChange}
-							/>
-							<input
-								type='text'
-								placeholder='Username'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.username}
-								name='username'
-								onChange={handleInputChange}
-							/>
-						</div>
-						<div className='flex flex-wrap gap-2'>
-							<input
-								type='email'
-								placeholder='Email'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.email}
-								name='email'
-								onChange={handleInputChange}
-							/>
-							<textarea
-								placeholder='Bio'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.bio}
-								name='bio'
-								onChange={handleInputChange}
-							/>
-						</div>
-						<div className='flex flex-wrap gap-2'>
-							<input
-								type='password'
-								placeholder='Current Password'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.currentPassword}
-								name='currentPassword'
-								onChange={handleInputChange}
-							/>
-							<input
-								type='password'
-								placeholder='New Password'
-								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.newPassword}
-								name='newPassword'
-								onChange={handleInputChange}
-							/>
-						</div>
-						<input
-							type='text'
-							placeholder='Link'
-							className='flex-1 input border border-gray-700 rounded p-2 input-md'
-							value={formData.link}
-							name='link'
-							onChange={handleInputChange}
-						/>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
-					</form>
-				</div>
-				<form method='dialog' className='modal-backdrop'>
-					<button className='outline-none'>close</button>
-				</form>
-			</dialog>
+  className="btn btn-outline rounded-full btn-sm"
+  onClick={() => document.getElementById("edit_profile_modal").showModal()}
+>
+  Edit profile
+</button>
+
+<dialog id="edit_profile_modal" className="modal">
+  <div
+    className="modal-box max-w-2xl w-full p-8 rounded-2xl shadow-lg relative"
+    style={{
+      background: "linear-gradient(to bottom right, #1E1E2F, #2A2A40)",
+      color: "#ffffff",
+    }}
+  >
+    {/* Close Button */}
+    <button
+      onClick={() => document.getElementById("edit_profile_modal").close()}
+      className="absolute top-4 right-4 text-white hover:text-red-400 text-xl"
+    >
+      ❌
+    </button>
+
+    <h3 className="text-2xl font-bold text-center mb-6">Update Profile</h3>
+
+    <form
+      className="flex flex-col gap-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        alert("Profile updated successfully");
+        document.getElementById("edit_profile_modal").close();
+      }}
+    >
+      {/* Row 1 */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <input
+          type="text"
+          name="fullName"
+          placeholder="Full Name"
+          className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.fullName}
+          onChange={handleInputChange}
+        />
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.username}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      {/* Row 2 */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.email}
+          onChange={handleInputChange}
+        />
+        <textarea
+          name="bio"
+          placeholder="Bio"
+          className="textarea textarea-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.bio}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      {/* Row 3 */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <input
+          type="password"
+          name="currentPassword"
+          placeholder="Current Password"
+          className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.currentPassword}
+          onChange={handleInputChange}
+        />
+        <input
+          type="password"
+          name="newPassword"
+          placeholder="New Password"
+          className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+          value={formData.newPassword}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      {/* Row 4 */}
+      <input
+        type="text"
+        name="link"
+        placeholder="Link"
+        className="input input-bordered w-full p-3 rounded-md bg-[#2A2A40] text-white placeholder-gray-400 border border-gray-600"
+        value={formData.link}
+        onChange={handleInputChange}
+      />
+
+      <button
+        type="submit"
+        className="btn bg-purple-600 hover:bg-purple-700 text-white rounded-full px-5 m-4 self-center"
+      >
+        Update
+      </button>
+    </form>
+  </div>
+
+  {/* Backdrop */}
+  <form method="dialog" className="modal-backdrop bg-black/50">
+    <button className="w-full h-full cursor-default" />
+  </form>
+</dialog>
+
+
 		</>
 	);
 };

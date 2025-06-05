@@ -2,12 +2,14 @@
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import cloudinary from "../lib/utils/cloudinary.js";
 
 export const signup = async (req, res) => {
 	try {
-		const { fullName, username, email, password } = req.body;
+		const { fullName, username, email, password, profileImg } = req.body;
 
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		// Step 1: Validate inputs
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  
 		if (!emailRegex.test(email)) {
 			return res.status(400).json({ error: "Invalid email format" });
 		}
@@ -22,42 +24,52 @@ export const signup = async (req, res) => {
 			return res.status(400).json({ error: "Email is already taken" });
 		}
 
-        //hash password
 		if (password.length < 6) {
 			return res.status(400).json({ error: "Password must be at least 6 characters long" });
 		}
+
+		// Step 2: Hash password
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
 
+		// Step 3: Upload image to Cloudinary (if exists)
+		let uploadedProfileImg = "";
+		if (profileImg) {
+			console.log("Uploading image...");
+			const uploadRes = await cloudinary.uploader.upload(profileImg, {
+				folder: "user_profiles",
+			});
+			uploadedProfileImg = uploadRes.secure_url;
+			console.log("Uploaded Image URL:", uploadedProfileImg);
+		}
+
+		// Step 4: Create user
 		const newUser = new User({
 			fullName,
 			username,
 			email,
 			password: hashedPassword,
+			profileImg: uploadedProfileImg,
 		});
 
-		if (newUser) {
-			generateTokenAndSetCookie(newUser._id, res);
-			await newUser.save();
+		await newUser.save();
 
-			res.status(201).json({
-				_id: newUser._id,
-				fullName: newUser.fullName,
-				username: newUser.username,
-				email: newUser.email,
-				followers: newUser.followers,
-				following: newUser.following,
-				profileImg: newUser.profileImg,
-				coverImg: newUser.coverImg,
-			});
-		} else {
-			res.status(400).json({ error: "Invalid user data" });
-		}
-	} catch (error) {
-		console.log("Error in signup controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
+		generateTokenAndSetCookie(newUser._id, res);
+
+		// Step 5: Send response
+		return res.status(201).json({
+			_id: newUser._id,
+			fullName: newUser.fullName,
+			username: newUser.username,
+			email: newUser.email,
+			profileImg: newUser.profileImg,
+		});
+	} catch (err) {
+		console.error("Signup error:", err.message);
+		return res.status(500).json({ error: "Internal server error" });
 	}
 };
+
 
 export const login = async (req, res) => {
 	try {

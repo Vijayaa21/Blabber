@@ -28,7 +28,7 @@ const RightPanel = () => {
 	if (suggestedUsers?.length === 0) return <div className="md:w-64 w-0"></div>;
 
 	return (
-		<div className="hidden lg:block w-64 my-4 mx-2">
+		<div className="hidden lg:block w-72 my-4 ">
 			<div
 				className="
 					bg-gradient-to-br from-[#7B2FF7]/20 to-[#2C3E50]/20 
@@ -74,7 +74,7 @@ const RightPanel = () => {
 										</span>
 										<span className="text-sm text-slate-400">@{user.username}</span>
 									</div>
-								</div>
+								
 
 								<div>
 									<button
@@ -90,7 +90,7 @@ const RightPanel = () => {
 										disabled={isPending}
 									>
 										{isPending ? <LoadingSpinner size="sm" /> : "Follow"}
-									</button>
+									</button></div>
 								</div>
 							</Link>
 						))}

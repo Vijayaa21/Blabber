@@ -1,4 +1,10 @@
 @import "tailwindcss";
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0F172A; /* match your page bg */
+}
 
 @plugin "daisyui/theme" {
   name: "dim";
