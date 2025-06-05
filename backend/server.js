@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000
 console.log(process.env.MONGO_URI)
 
 app.use(cors({
-  origin: 'https://blabber-front.onrender.com/',
+  origin: "https://blabber-front.onrender.com", // ✅ No trailing slash
   credentials: true
 }));
 

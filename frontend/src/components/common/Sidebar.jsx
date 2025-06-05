@@ -14,6 +14,7 @@ const Sidebar = () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
           method: "POST",
+          credentials: true
         });
         const data = await res.json();
         if (!res.ok) {

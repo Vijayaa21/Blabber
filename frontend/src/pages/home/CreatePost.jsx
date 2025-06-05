@@ -26,6 +26,7 @@ const CreatePost = () => {
 			try {
 				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/create`, {
 					method: "POST",
+					credentials: true,
 					headers: {
 						"Content-Type": "application/json",
 					},

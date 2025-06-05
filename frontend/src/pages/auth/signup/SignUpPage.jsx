@@ -25,6 +25,7 @@ const SignUpPage = () => {
 			try {
 				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
 					method: "POST",
+					credentials: true,
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify(formData),
 				});
