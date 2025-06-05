@@ -20,6 +20,7 @@ function App() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
           credentials: "include",
+          method: "GET",
         });
 
         const text = await res.text();

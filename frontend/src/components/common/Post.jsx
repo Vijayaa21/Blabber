@@ -29,7 +29,7 @@ const Post = ({ post }) => {
 			try {
 				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post._id}`, {
 					method: "DELETE",
-					credentials: true
+					credentials: "include"
 				});
 				const data = await res.json();
 
@@ -52,7 +52,7 @@ const Post = ({ post }) => {
 			try {
 				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/like/${post._id}`, {
 					method: "POST",
-					credentials: true
+					credentials: "include",
 				});
 				const data = await res.json();
 				if (!res.ok) {
@@ -83,7 +83,7 @@ const Post = ({ post }) => {
 		mutationFn: async () => {
 			const res = await fetch(`${import.meta.env.VITE_API_URL}/posts/comment/${post._id}`, {
 				method: "POST",
-				credentials: true,
+				credentials: "include",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ text: comment }),
 			});
