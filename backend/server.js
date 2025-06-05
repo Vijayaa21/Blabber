@@ -25,7 +25,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-
+app.get("/", (req, res) => {
+    res.send("Welcome to the Blabber server");
+});   
 
 app.listen(PORT, () => {
     console.log(`server is running at port ${PORT}`);
