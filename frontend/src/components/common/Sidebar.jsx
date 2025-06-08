@@ -96,12 +96,13 @@ const Sidebar = () => {
           </Link>
 
           <button
-            onClick={logout}
+            onClick={() => logout()}
             className='text-red-400 hover:text-red-500 transition'
             title="Logout"
           >
             <BiLogOut className='w-5 h-5' />
           </button>
+
         </div>
       )}
 
