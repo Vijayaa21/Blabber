@@ -77,9 +77,10 @@ const Sidebar = () => {
         </ul>
 
         {authUser && (
+        <div className='mt-auto flex gap-3 items-center py-2 px-3 rounded-xl transition-all hover:bg-white/10 duration-300'>
           <Link
             to={`/profile/${authUser.username}`}
-            className='mt-auto flex gap-3 items-center transition-all hover:bg-white/10 py-2 px-3 rounded-xl duration-300'
+            className='flex gap-3 items-center flex-1'
           >
             <div className='w-9 h-9 rounded-full overflow-hidden'>
               <img
@@ -88,19 +89,22 @@ const Sidebar = () => {
                 className='w-full h-full object-cover block'
               />
             </div>
-            <div className='flex-1 hidden md:block'>
+            <div className='hidden md:block'>
               <p className='font-semibold text-sm truncate'>{authUser?.fullName}</p>
               <p className='text-xs text-white/60 truncate'>@{authUser?.username}</p>
             </div>
-            <BiLogOut
-              className='w-5 h-5 cursor-pointer text-red-400 hover:text-red-500 transition'
-              onClick={(e) => {
-                e.preventDefault();
-                logout();
-              }}
-            />
           </Link>
-        )}
+
+          <button
+            onClick={logout}
+            className='text-red-400 hover:text-red-500 transition'
+            title="Logout"
+          >
+            <BiLogOut className='w-5 h-5' />
+          </button>
+        </div>
+      )}
+
       </div>
     </div>
   );

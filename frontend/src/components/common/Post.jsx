@@ -81,7 +81,7 @@ const Post = ({ post }) => {
 	// COMMENT on post with optimistic update
 	const { mutate: postComment } = useMutation({
 		mutationFn: async () => {
-			const res = await fetch(`${import.meta.env.VITE_API_URL}/posts/comment/${post._id}`, {
+			const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/comment/${post._id}`, {
 				method: "POST",
 				credentials: "include",
 				headers: { "Content-Type": "application/json" },
