@@ -79,35 +79,29 @@ const Sidebar = () => {
         </ul>
 
         {authUser && (
-          <div className='mt-auto flex gap-3 items-center py-2 px-3 rounded-xl transition-all hover:bg-white/10 duration-300'>
-            <Link
-              to={`/profile/${authUser.username}`}
-              className='flex gap-3 items-center flex-1'
-            >
-              <div className='w-9 h-9 rounded-full overflow-hidden'>
-                <img
-                  src={authUser?.profileImg || "/avatar-placeholder.png"}
-                  alt='Profile'
+					<Link
+						to={`/profile/${authUser.username}`}
+            className='mt-auto flex gap-3 items-center py-2 px-3 rounded-xl transition-all hover:bg-white/10 duration-300'>
+						<div className='w-9 h-9 rounded-full overflow-hidden'>
+								<img src={authUser?.profileImg || "/avatar-placeholder.png"} 
                   className='w-full h-full object-cover block'
-                />
-              </div>
-              <div className='hidden md:block'>
+/>
+						</div>
+						<div className='flex justify-between flex-1'>
+							<div className='hidden md:block'>
                 <p className='font-semibold text-sm truncate'>{authUser?.fullName}</p>
                 <p className='text-xs text-white/60 truncate'>@{authUser?.username}</p>
               </div>
-            </Link>
-
-            <button
-              onClick={() => {
-                logout();
-              }}
-              className='text-red-400 hover:text-red-500 transition'
-              title='Logout'
-            >
-              <BiLogOut className='w-5 h-5' />
-            </button>
-          </div>
-        )}
+							<BiLogOut
+								className='w-5 h-5 cursor-pointer'
+								onClick={(e) => {
+									e.preventDefault();
+									logout();
+								}}
+							/>
+						</div>
+					</Link>
+				)}
 
 
       </div>
