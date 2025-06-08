@@ -2,13 +2,14 @@ import XSvg from "../svgs/X";
 import { MdHomeFilled } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
-import { Link, navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 
-const navigate = navigate();
 const Sidebar = () => {
+  const navigate = useNavigate();
+
   const queryClient = useQueryClient();
   const { mutate: logout } = useMutation({
     mutationFn: async () => {
@@ -28,7 +29,7 @@ const Sidebar = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       toast.success("Logged out successfully");
-      navigate("/login"); // ✅ Fixes 404 issue
+      navigate("/login"); 
     },
     onError: () => {
       toast.error("Logout failed");
