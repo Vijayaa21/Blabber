@@ -27,7 +27,7 @@ const Sidebar = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       toast.success("Logged out successfully");
-      window.location.href = "/login"; 
+      window.location.href = "api/auth/login"; 
     },
     onError: () => {
       toast.error("Logout failed");
