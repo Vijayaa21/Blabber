@@ -7,8 +7,8 @@ Blabber is a modern full-stack social media web application built using the **ME
 ## 🌐 Live Demo
 
 Hosted on:  
-🔗 **Frontend**: https://your-frontend-url.onrender.com  
-🔗 **Backend**: https://your-backend-url.onrender.com
+🔗 **Render**: blabber-front.onrender.com/
+
 
 ---
 
