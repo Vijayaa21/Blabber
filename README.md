@@ -12,6 +12,13 @@ Hosted on:
 
 ---
 
+## ⭐ Like the Project?
+
+If you find this project useful or interesting, consider **starring** 🌟 the repository to show your support! It motivates me to keep improving and adding more features.  
+👉 [Give it a Star on GitHub](https://github.com/vijayaa21/blabber)
+
+---
+
 ## 📦 Tech Stack
 
 - **Frontend**: React, React Router DOM, TailwindCSS, React Query, React Hot Toast  
