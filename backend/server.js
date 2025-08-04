@@ -13,13 +13,17 @@ import cors from 'cors';
 dotenv.config()
 
 const app =  express();
+const BASE_URL = "https://blabber-av0p.onrender.com/"; // example
 
 const PORT = process.env.PORT || 5000
 
 console.log(process.env.MONGO_URI)
 
 app.use(cors({
-  origin: "https://blabber-front.onrender.com", // ✅ No trailing slash
+  origin: [
+    "https://blabber-front.onrender.com",
+    "http://localhost:3000"
+  ],
   credentials: true
 }));
 
