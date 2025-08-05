@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import XSvg from "../../../components/svgs/X";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
@@ -19,6 +21,8 @@ const SignUpPage = () => {
 		password: "",
 		profileImg: defaultProfile,
 	});
+	const navigate=useNavigate();
+	const queryClient = useQueryClient();
 
 	const { mutate, isError, isPending, error } = useMutation({
 		mutationFn: async (formData) => {
@@ -36,7 +40,12 @@ const SignUpPage = () => {
 				toast.error(error.message);
 			}
 		},
-		onSuccess: () => toast.success("Account created successfully"),
+		onSuccess: () => {toast.success("Account created successfully");
+			queryClient.invalidateQueries(["authUser"]);
+			navigate('/');
+		}
+
+			
 	});
 
 	const handleSubmit = (e) => {
