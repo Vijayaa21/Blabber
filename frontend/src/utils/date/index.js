@@ -21,7 +21,11 @@ export const formatPostDate = (createdAt) => {
 };
 
 export const formatMemberSinceDate = (createdAt) => {
+	if (!createdAt) return "N/A";
+
 	const date = new Date(createdAt);
+	if (isNaN(date)) return "N/A";
+
 	const months = [
 		"January",
 		"February",
@@ -38,5 +42,6 @@ export const formatMemberSinceDate = (createdAt) => {
 	];
 	const month = months[date.getMonth()];
 	const year = date.getFullYear();
-	return `Joined ${month} ${year}`;
+
+	return `${month} ${year}`; // remove the extra "Joined"
 };
