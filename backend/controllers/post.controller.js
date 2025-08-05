@@ -227,3 +227,46 @@ export const getUserPosts = async (req, res) => {
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
+export const updatePost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const { text, img } = req.body;
+    const userId = req.user._id;
+
+    
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    
+    if (post.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Unauthorized to edit this post" });
+    }
+
+    
+    let updatedImg = post.img;
+    if (img && img !== post.img) {
+      
+      if (post.img) {
+        const publicId = post.img.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      
+      const uploadedResponse = await cloudinary.uploader.upload(img);
+      updatedImg = uploadedResponse.secure_url;
+    }
+
+    
+    post.text = text || post.text;
+    post.img = updatedImg;
+
+    await post.save();
+
+    return res.status(200).json({ message: "Post updated successfully", post });
+
+  } catch (error) {
+    console.error("Error in updatePost controller:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
