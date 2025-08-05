@@ -97,7 +97,7 @@ const ProfilePage = () => {
 							{/* Cover Image */}
 							<div className='h-56 w-full relative group'>
 								<img
-									src={coverImg || user?.coverImg || "/cover.png"}
+									src={coverImg || user?.coverImg || "/cover.svg"}
 									className='h-full w-full object-cover rounded-b-xl shadow-sm'
 									alt='cover'
 								/>
