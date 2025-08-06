@@ -1,5 +1,46 @@
 import mongoose from "mongoose"
 
+const transcriptSegmentSchema = new mongoose.Schema({
+    id: {
+        type: String,
+        required: true
+    },
+    text: {
+        type: String,
+        required: true
+    },
+    startTime: {
+        type: Number,
+        required: true
+    },
+    endTime: {
+        type: Number,
+        required: true
+    },
+    speaker: {
+        type: String,
+        default: "Speaker"
+    },
+    confidence: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 1
+    },
+    isConfirmed: {
+        type: Boolean,
+        default: false
+    },
+    isEdited: {
+        type: Boolean,
+        default: false
+    },
+    needsReview: {
+        type: Boolean,
+        default: false
+    }
+});
+
 const postSchema = new mongoose.Schema({
 
     user:{
@@ -13,6 +54,10 @@ const postSchema = new mongoose.Schema({
     img: {
         type: String
     },
+    audioUrl: {
+        type: String
+    },
+    transcript: [transcriptSegmentSchema],
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,

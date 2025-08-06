@@ -1,20 +1,26 @@
 import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { IoCloseSharp } from "react-icons/io5";
+import { FaMicrophone } from "react-icons/fa";
 import { useRef, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import EmojiPicker from "emoji-picker-react";
+import AudioPost from "../../components/common/AudioPost";
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
 	const [img, setImg] = useState(null);
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+	const [showAudioPost, setShowAudioPost] = useState(false);
 	const imgRef = useRef(null);
 	const emojiPickerRef = useRef(null);
 	const queryClient = useQueryClient();
 
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { data: authUser } = useQuery({ 
+		queryKey: ["authUser"],
+		enabled: false // Only use cached data, don't refetch
+	});
 
 	const {
 		mutate: createPost,
@@ -134,6 +140,11 @@ const CreatePost = () => {
 							className='fill-primary w-5 h-5 cursor-pointer'
 							onClick={() => setShowEmojiPicker((prev) => !prev)}
 						/>
+						<FaMicrophone
+							className='fill-primary w-5 h-5 cursor-pointer'
+							onClick={() => setShowAudioPost(true)}
+							title="Add audio/transcript"
+						/>
 						{showEmojiPicker && (
 							<div
 								ref={emojiPickerRef}
@@ -150,6 +161,13 @@ const CreatePost = () => {
 				</div>
 				{isError && <div className='text-red-500'>{error.message}</div>}
 			</form>
+			
+			{/* Audio Post Modal */}
+			{showAudioPost && (
+				<AudioPost
+					onClose={() => setShowAudioPost(false)}
+				/>
+			)}
 		</div>
 	);
 };
