@@ -20,10 +20,10 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 
-router.post("/send-verify-otp", protectRoute, sendVerifyOtp); // send OTP after signup
-router.post("/verify-otp", protectRoute, verifyOtp);          // verify account using OTP
+router.post("/send-verify-otp", protectRoute, sendVerifyOtp);
+router.post("/verify-otp", protectRoute, verifyOtp);
 
-router.post("/send-reset-otp", sendResetOtp);                 // send OTP to email for password reset
-router.post("/reset-password", resetPassword);                // reset password using OTP
+router.post("/send-reset-otp", sendResetOtp);
+router.post("/reset-password", resetPassword);
 
 export default router;

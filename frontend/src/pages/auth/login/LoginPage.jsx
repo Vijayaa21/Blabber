@@ -19,7 +19,8 @@ const LoginPage = () => {
 				method: "POST",
 				credentials: "include",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username, password }),
+				body: JSON.stringify({ emailOrUsername: username, password })
+
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Login failed");
@@ -59,7 +60,7 @@ const LoginPage = () => {
 						<input
 							type="text"
 							name="username"
-							placeholder="Username"
+							placeholder="Username or Email"
 							value={formData.username}
 							onChange={handleInputChange}
 							className="w-full bg-transparent outline-none text-white placeholder-white/60"
@@ -89,7 +90,15 @@ const LoginPage = () => {
 						<p className="text-red-400 text-sm text-center">{error.message}</p>
 					)}
 				</form>
-
+				<div className="text-center">
+					<Link
+						to="/forgot-password"
+						className="inline-block mt-2 text-[#b99aff] hover:underline mt-4"
+						>
+							Forgot Password
+					</Link>
+				</div>
+				
 				<div className="text-center mt-6 text-white/80">
 					<p>Don’t have an account?</p>
 					<Link
