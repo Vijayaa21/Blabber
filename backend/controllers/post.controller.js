@@ -227,3 +227,56 @@ export const getUserPosts = async (req, res) => {
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
+export const updateTranscript = async (req, res) => {
+	try {
+		const { transcript } = req.body;
+		const postId = req.params.id;
+		const userId = req.user._id.toString();
+
+		// Find the post
+		const post = await Post.findById(postId);
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+
+		// Check if user owns the post
+		if (post.user.toString() !== userId) {
+			return res.status(401).json({ error: "You are not authorized to update this post" });
+		}
+
+		// Validate transcript data
+		if (!Array.isArray(transcript)) {
+			return res.status(400).json({ error: "Transcript must be an array" });
+		}
+
+		// Validate each transcript segment
+		for (const segment of transcript) {
+			if (!segment.id || !segment.text || typeof segment.startTime !== 'number' || typeof segment.endTime !== 'number') {
+				return res.status(400).json({ error: "Invalid transcript segment format" });
+			}
+		}
+
+		// Update the post with new transcript
+		post.transcript = transcript;
+		await post.save();
+
+		// Populate the post with user data for response
+		await post.populate({
+			path: "user",
+			select: "-password",
+		});
+		await post.populate({
+			path: "comments.user",
+			select: "-password",
+		});
+
+		res.status(200).json({
+			message: "Transcript updated successfully",
+			post: post
+		});
+	} catch (error) {
+		console.log("Error in updateTranscript controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};

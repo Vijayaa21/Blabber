@@ -27,7 +27,10 @@ const ProfilePage = () => {
 	const { username } = useParams();
 
 	const { follow, isPending } = useFollow();
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { data: authUser } = useQuery({ 
+		queryKey: ["authUser"],
+		enabled: false // Only use cached data, don't refetch
+	});
 
 	const {
 		data: user,

@@ -8,12 +8,11 @@ import connectMongoDB from "./db/connectMongoDB.js";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 
-
-
+// Load environment variables
 dotenv.config()
 
 const app =  express();
-const BASE_URL = "https://blabber-av0p.onrender.com/"; // example
+const BASE_URL = process.env.BASE_URL || "http://localhost:5000"; 
 
 const PORT = process.env.PORT || 5000
 
@@ -21,8 +20,10 @@ console.log(process.env.MONGO_URI)
 
 app.use(cors({
   origin: [
-    "https://blabber-front.onrender.com",
-    "http://localhost:3000"
+    process.env.FRONTEND_URL || "http://localhost:3000",
+    "http://localhost:3000",
+    "http://localhost:5173", // Vite default port
+    "https://blabber-front.onrender.com"
   ],
   credentials: true
 }));

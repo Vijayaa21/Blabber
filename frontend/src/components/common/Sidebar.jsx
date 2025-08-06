@@ -1,7 +1,7 @@
 import XSvg from "../svgs/X";
 import { MdHomeFilled } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaMicrophone } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +36,10 @@ const Sidebar = () => {
     },
   });
 
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser } = useQuery({ 
+    queryKey: ["authUser"],
+    enabled: false // Only use cached data, don't refetch
+  });
 
   return (
     <div className='md:flex-[2_2_0] w-18 max-w-52 '>
@@ -76,6 +79,15 @@ const Sidebar = () => {
             >
               <FaUser className='w-6 h-6 text-pink-300' />
               <span className='text-base font-medium hidden md:block'>Profile</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              to='/demo/transcript'
+              className='flex gap-3 items-center hover:bg-white/10 transition-all rounded-xl duration-300 py-2 pl-3 pr-4'
+            >
+              <FaMicrophone className='w-6 h-6 text-green-300' />
+              <span className='text-base font-medium hidden md:block'>Transcript Demo</span>
             </Link>
           </li>
         </ul>

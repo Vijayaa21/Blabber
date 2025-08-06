@@ -4,11 +4,14 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { GiTalk, GiBookmark, GiTrashCan } from "react-icons/gi";
 import { MdFavorite } from "react-icons/md";
 import { IoRepeatSharp } from "react-icons/io5";
+import { FaMicrophone, FaFileAudio } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
+import EditableTranscript from "./EditableTranscript";
+import AudioPost from "./AudioPost";
 import { formatPostDate } from "../../utils/date";
 
 
@@ -16,13 +19,19 @@ const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
 	const [isCommenting, setIsCommenting] = useState(false);
 	const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+	const [showTranscript, setShowTranscript] = useState(false);
+	const [showAudioPost, setShowAudioPost] = useState(false);
 	const queryClient = useQueryClient();
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { data: authUser } = useQuery({ 
+		queryKey: ["authUser"],
+		enabled: false // Only use cached data, don't refetch
+	});
 
 	const postOwner = post.user;
 	const isLiked = post.likes.includes(authUser._id);
 	const isMyPost = post.user && authUser._id === post.user._id;
 	const formattedDate = formatPostDate(post.createdAt);
+	const hasAudio = post.audioUrl || post.transcript?.length > 0;
 
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
@@ -148,11 +157,27 @@ const Post = ({ post }) => {
 	// Close dialog on Escape key
 	useEffect(() => {
 		const onEsc = (e) => {
-			if (e.key === "Escape") setIsCommentDialogOpen(false);
+			if (e.key === "Escape") {
+				setIsCommentDialogOpen(false);
+				setShowTranscript(false);
+				setShowAudioPost(false);
+			}
 		};
 		window.addEventListener("keydown", onEsc);
 		return () => window.removeEventListener("keydown", onEsc);
 	}, []);
+
+	const handleTranscriptUpdate = async (updatedTranscript) => {
+		// Update the post with new transcript data
+		queryClient.setQueryData(["posts"], (oldData) => {
+			return oldData.map((p) => {
+				if (p._id === post._id) {
+					return { ...p, transcript: updatedTranscript };
+				}
+				return p;
+			});
+		});
+	};
 
 	return (
 		<div className='flex gap-2 items-start p-4 border-b border-gray-700'>
@@ -195,6 +220,47 @@ const Post = ({ post }) => {
 							className='h-80 object-contain rounded-lg border border-gray-700'
 							alt=''
 						/>
+					)}
+					
+					{/* Audio Content */}
+					{hasAudio && (
+						<div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+							<div className="flex items-center justify-between mb-2">
+								<div className="flex items-center gap-2">
+									<FaFileAudio className="text-blue-400" />
+									<span className="text-sm text-gray-300">Audio Content</span>
+								</div>
+								<div className="flex gap-2">
+									{post.transcript?.length > 0 && (
+										<button
+											onClick={() => setShowTranscript(!showTranscript)}
+											className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+										>
+											{showTranscript ? 'Hide' : 'Show'} Transcript
+										</button>
+									)}
+									{isMyPost && (
+										<button
+											onClick={() => setShowAudioPost(true)}
+											className="text-green-400 hover:text-green-300 text-sm transition-colors"
+										>
+											Edit
+										</button>
+									)}
+								</div>
+							</div>
+							
+							{/* Transcript Preview */}
+							{showTranscript && post.transcript?.length > 0 && (
+								<EditableTranscript
+									transcript={post.transcript}
+									audioUrl={post.audioUrl}
+									onTranscriptUpdate={handleTranscriptUpdate}
+									isEditable={isMyPost}
+									postId={post._id}
+								/>
+							)}
+						</div>
 					)}
 				</div>
 
@@ -313,6 +379,14 @@ const Post = ({ post }) => {
 					</div>
 				</div>
 			</div>
+			
+			{/* Audio Post Modal */}
+			{showAudioPost && (
+				<AudioPost
+					post={post}
+					onClose={() => setShowAudioPost(false)}
+				/>
+			)}
 		</div>
 	);
 };

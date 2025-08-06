@@ -4,10 +4,12 @@ import LoginPage from "./pages/auth/login/LoginPage";
 import SignUpPage from "./pages/auth/signup/SignUpPage";
 import NotificationPage from "./pages/notification/NotificationPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import TranscriptDemo from "./pages/demo/TranscriptDemo";
 
 import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
 import LoadingSpinner from "./components/common/LoadingSpinner";
+import { TranscriptProvider } from "./contexts/TranscriptContext";
 import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 
@@ -57,45 +59,51 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
-      {/* Sidebar */}
-      {authUser && <Sidebar />}
+    <TranscriptProvider>
+      <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
+        {/* Sidebar */}
+        {authUser && <Sidebar />}
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 overflow-y-auto">
-        <Routes>
-          <Route
-            path="/"
-            element={authUser ? <HomePage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/signup"
-            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/notifications"
-            element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/profile/:username"
-            element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
-          />
-        </Routes>
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 p-4 overflow-y-auto">
+          <Routes>
+            <Route
+              path="/"
+              element={authUser ? <HomePage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/login"
+              element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/signup"
+              element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/notifications"
+              element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/profile/:username"
+              element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/demo/transcript"
+              element={<TranscriptDemo />}
+            />
+          </Routes>
+        </main>
 
-      {/* Right Panel */}
-      {authUser && (
-        <aside className="w-76 hidden lg:block p-2">
-          <RightPanel />
-        </aside>
-      )}
+        {/* Right Panel */}
+        {authUser && (
+          <aside className="w-76 hidden lg:block p-2">
+            <RightPanel />
+          </aside>
+        )}
 
-      <Toaster position="top-right" />
-    </div>
+        <Toaster position="top-right" />
+      </div>
+    </TranscriptProvider>
   );
 }
 
