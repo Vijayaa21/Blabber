@@ -1,127 +1,193 @@
-
-import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
-import User from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import cloudinary from "../lib/utils/cloudinary.js";
+import User from "../models/user.model.js";
+import transporter from "../config/nodemailer.js";
+
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET||"Hello", { expiresIn: "15d" });
+};
 
 export const signup = async (req, res) => {
-	try {
-		const { fullName, username, email, password, profileImg } = req.body;
+  try {
+    const { username, fullName, email, password } = req.body;
 
-		// Step 1: Validate inputs
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  
-		if (!emailRegex.test(email)) {
-			return res.status(400).json({ error: "Invalid email format" });
-		}
+    if (!username || !fullName || !email || !password)
+      return res.status(400).json({ error: "All fields are required" });
 
-		const existingUser = await User.findOne({ username });
-		if (existingUser) {
-			return res.status(400).json({ error: "Username is already taken" });
-		}
+    if (
+      password.length < 6 ||
+      !/\d/.test(password) ||
+      !/[!@#$%^&*]/.test(password)
+    ) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters, contain a number and a special character",
+      });
+    }
 
-		const existingEmail = await User.findOne({ email });
-		if (existingEmail) {
-			return res.status(400).json({ error: "Email is already taken" });
-		}
+    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    if (userExists)
+      return res.status(400).json({ error: "User already exists" });
 
-		if (password.length < 6) {
-			return res.status(400).json({ error: "Password must be at least 6 characters long" });
-		}
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-		// Step 2: Hash password
-		const salt = await bcrypt.genSalt(10);
-		const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.create({
+      username,
+      fullName,
+      email,
+      password: hashedPassword,
+    });
 
-		// Step 3: Upload image to Cloudinary (if exists)
-		let uploadedProfileImg = "";
-		if (profileImg) {
-			console.log("Uploading image...");
-			const uploadRes = await cloudinary.uploader.upload(profileImg, {
-				folder: "user_profiles",
-			});
-			uploadedProfileImg = uploadRes.secure_url;
-			console.log("Uploaded Image URL:", uploadedProfileImg);
-		}
+    const token = generateToken(user._id);
 
-		// Step 4: Create user
-		const newUser = new User({
-			fullName,
-			username,
-			email,
-			password: hashedPassword,
-			profileImg: uploadedProfileImg,
-		});
+    res.cookie("jwt", token, {
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
 
-		await newUser.save();
-
-		generateTokenAndSetCookie(newUser._id, res);
-
-		// Step 5: Send response
-		return res.status(201).json({
-			_id: newUser._id,
-			fullName: newUser.fullName,
-			username: newUser.username,
-			email: newUser.email,
-			profileImg: newUser.profileImg,
-		});
-	} catch (err) {
-		console.error("Signup error:", err.message);
-		return res.status(500).json({ error: "Internal server error" });
-	}
+    res.status(201).json({ message: "Signup successful", userId: user._id });
+  } catch (err) {
+    console.error("Signup error:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
 };
-
 
 export const login = async (req, res) => {
-	try {
-		const { username, password } = req.body;
-		const user = await User.findOne({ username });
-		const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
+  try {
+    const { emailOrUsername, password } = req.body;
+    const user = await User.findOne({
+      $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+    });
 
-		if (!user || !isPasswordCorrect) {
-			return res.status(400).json({ error: "Invalid username or password" });
-		}
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-		// ✅ Set the cookie with JWT securely
-		generateTokenAndSetCookie(user._id, res);
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: "Invalid credentials" });
 
-		res.status(200).json({
-			_id: user._id,
-			fullName: user.fullName,
-			username: user.username,
-			email: user.email,
-			followers: user.followers,
-			following: user.following,
-			profileImg: user.profileImg,
-			coverImg: user.coverImg,
-		});
-	} catch (error) {
-		console.log("Error in login controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
-	}
+    const token = generateToken(user._id);
+    res.cookie("jwt", token, {
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
+
+    res.json({ message: "Login successful", userId: user._id });
+  } catch (err) {
+    console.error("Login error:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
 };
 
-export const logout = async (req, res) => {
-	try {
-		res.cookie("jwt", "", {
-			httpOnly: true,
-			sameSite: "None",
-			secure: true,
-			expires: new Date(0), 
-		});
-		res.status(200).json({ message: "Logged out successfully" });
-	} catch (error) {
-		console.log("Error in logout controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
-	}
+export const logout = (req, res) => {
+  res.clearCookie("jwt");
+  res.json({ message: "Logged out successfully" });
 };
-
 
 export const getMe = async (req, res) => {
-	try {
-		const user = await User.findById(req.user._id).select("-password");
-		res.status(200).json(user);
-	} catch (error) {
-		console.log("Error in getMe controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
-	}
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const sendVerifyOtp = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(400).json({ error: "User not found" });
+    if (user.isAccountVerified)
+      return res.status(400).json({ error: "Already verified" });
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.verifyOtp = otp;
+    user.verifyOtpExpiry = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Verify your account",
+      text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+    });
+
+    res.json({ success: true, message: "OTP sent" });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user || user.verifyOtp !== otp)
+      return res.status(400).json({ error: "Invalid OTP" });
+    if (user.verifyOtpExpiry < Date.now())
+      return res.status(400).json({ error: "OTP expired" });
+
+    user.isAccountVerified = true;
+    user.verifyOtp = "";
+    user.verifyOtpExpiry = 0;
+    await user.save();
+
+    res.json({ success: true, message: "Account verified" });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const sendResetOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.resetOtp = otp;
+    user.resetOtpExpiry = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Reset Password",
+      text: `Your reset code is ${otp}. Expires in 10 minutes.`,
+    });
+
+    res.json({ success: true, message: "OTP sent" });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user || user.resetOtp !== otp)
+      return res.status(400).json({ error: "Invalid OTP" });
+    if (user.resetOtpExpiry < Date.now())
+      return res.status(400).json({ error: "OTP expired" });
+
+    const validPassword = /^(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}$/;
+    if (!validPassword.test(newPassword))
+      return res.status(400).json({
+        error: "Password must contain at least 6 characters, a number, and a special character",
+      });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetOtp = "";
+    user.resetOtpExpiry = 0;
+    await user.save();
+
+    res.json({ success: true, message: "Password reset successful" });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
 };
