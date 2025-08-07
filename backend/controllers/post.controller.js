@@ -298,3 +298,29 @@ export const deleteComment = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+export const getPostById = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		const post = await Post.findById(id)
+			.populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			});
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+
+		const likeCount = post.likes.length;
+
+		res.status(200).json({ ...post.toObject(), likeCount });
+	} catch (error) {
+		console.log("Error in getPostById controller:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
