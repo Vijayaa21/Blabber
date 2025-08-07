@@ -1,19 +1,26 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
+
 import HomePage from "./pages/home/HomePage";
 import LoginPage from "./pages/auth/login/LoginPage";
 import SignUpPage from "./pages/auth/signup/SignUpPage";
 import NotificationPage from "./pages/notification/NotificationPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import ForgotPassword from "./pages/auth/forgotpassword/forgotPassword";
+import VerifyOtpPage from "./pages/auth/verifyOtp/VerifyOTP";
 
 import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
 import LoadingSpinner from "./components/common/LoadingSpinner";
-import { Toaster } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
 
 import "./style.css";
 
 function App() {
+  const location = useLocation();
+
+  const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-otp"].includes(location.pathname);
+
   const { data: authUser, isLoading } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -57,45 +64,36 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
-      {/* Sidebar */}
-      {authUser && <Sidebar />}
-
-      {/* Main Content */}
-      <main className="flex-1 p-4 overflow-y-auto">
+    <>
+      {isAuthPage ? (
+        // Render only the auth page without layout
         <Routes>
-          <Route
-            path="/"
-            element={authUser ? <HomePage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/signup"
-            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/notifications"
-            element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/profile/:username"
-            element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
-          />
+          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
         </Routes>
-      </main>
-
-      {/* Right Panel */}
-      {authUser && (
-        <aside className="w-76 hidden lg:block p-2">
-          <RightPanel />
-        </aside>
+      ) : (
+        // Render the full layout for logged-in routes
+        <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
+          {authUser && <Sidebar />}
+          <main className="flex-1 p-4 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+              <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
+              <Route path="/profile/:username" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+          {authUser && (
+            <aside className="w-76 hidden lg:block p-2">
+              <RightPanel />
+            </aside>
+          )}
+        </div>
       )}
-
       <Toaster position="top-right" />
-    </div>
+    </>
   );
 }
 

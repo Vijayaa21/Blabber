@@ -4,9 +4,24 @@ import User from "../models/user.model.js";
 import transporter from "../config/nodemailer.js";
 
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET||"Hello", { expiresIn: "15d" });
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15d" });
 };
+const isPasswordTooSimilar = (password, username, fullName, email) => {
+  const loweredPassword = password.toLowerCase();
+  const loweredUsername = username.toLowerCase();
+  const loweredEmail = email.toLowerCase();
+  const loweredFullNameParts = fullName.toLowerCase().split(/\s+/);
+  if (loweredPassword.includes(loweredUsername) || loweredPassword.includes(loweredEmail)) {
+    return true;
+  }
+  for (let part of loweredFullNameParts) {
+    if (part.length >= 3 && loweredPassword.includes(part)) {
+      return true;
+    }
+  }
 
+  return false;
+};
 export const signup = async (req, res) => {
   try {
     const { username, fullName, email, password } = req.body;
@@ -22,6 +37,9 @@ export const signup = async (req, res) => {
       return res.status(400).json({
         error: "Password must be at least 6 characters, contain a number and a special character",
       });
+    }
+    if (isPasswordTooSimilar(password, username, fullName, email)) {
+      return res.status(400).json({error: "Password cannot contain parts of username, full name, or email"});
     }
 
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
@@ -172,22 +190,47 @@ export const resetPassword = async (req, res) => {
 
     if (!user || user.resetOtp !== otp)
       return res.status(400).json({ error: "Invalid OTP" });
+
     if (user.resetOtpExpiry < Date.now())
       return res.status(400).json({ error: "OTP expired" });
 
-    const validPassword = /^(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}$/;
-    if (!validPassword.test(newPassword))
+    if (
+      newPassword.length < 6 ||
+      !/\d/.test(newPassword) ||
+      !/[!@#$%^&*]/.test(newPassword)
+    ) {
       return res.status(400).json({
-        error: "Password must contain at least 6 characters, a number, and a special character",
+        error:
+          "Password must be at least 6 characters, contain a number and a special character",
       });
+    }
+
+    if (
+      isPasswordTooSimilar(newPassword, user.username, user.fullName, user.email)
+    ) {
+      return res.status(400).json({
+        error: "Password cannot contain parts of username, full name, or email",
+      });
+    }
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.resetOtp = "";
     user.resetOtpExpiry = 0;
     await user.save();
 
-    res.json({ success: true, message: "Password reset successful" });
+    const token = generateToken(user._id);
+    res.cookie("jwt", token, {
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
+
+    res.json({ success: true, message: "Password reset successful", userId: user._id });
   } catch (err) {
+    console.error("Reset Password Error:", err.message);
     res.status(500).json({ error: "Something went wrong" });
   }
 };
+
+

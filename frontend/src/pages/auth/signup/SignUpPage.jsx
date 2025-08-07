@@ -1,15 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import XSvg from "../../../components/svgs/X";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdDriveFileRenameOutline } from "react-icons/md";
-
-import { useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 
 const defaultProfile = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
@@ -21,31 +18,42 @@ const SignUpPage = () => {
 		password: "",
 		profileImg: defaultProfile,
 	});
-	const navigate=useNavigate();
+
+	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
 	const { mutate, isError, isPending, error } = useMutation({
 		mutationFn: async (formData) => {
-			try {
-				const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
-					method: "POST",
-					credentials: "include",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(formData),
-				});
-				const data = await res.json();
-				if (data.error) throw new Error(data.error);
-				return data;
-			} catch (error) {
-				toast.error(error.message);
-			}
+			const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
+				method: "POST",
+				credentials: "include",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(formData),
+			});
+			const data = await res.json();
+			if (!res.ok || data.error) throw new Error(data.error || "Signup failed");
+			return data;
 		},
-		onSuccess: () => {toast.success("Account created successfully");
-			queryClient.invalidateQueries(["authUser"]);
-			navigate('/');
-		}
+		onSuccess: async (data) => {
+			toast.success("Account created");
+			const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/send-verify-otp`, {
+				method: "POST",
+				credentials: "include",
+			});
+			const result = await res.json();
 
-			
+			if (!res.ok) {
+				toast.error(result.error || "Failed to send OTP");
+				return;
+			}
+
+			toast.success("OTP sent to your email");
+			queryClient.invalidateQueries(["authUser"]);
+			navigate(`/verify-otp?userId=${data.userId}`);
+		},
+		onError: (err) => {
+			toast.error(err.message);
+		},
 	});
 
 	const handleSubmit = (e) => {
@@ -57,14 +65,14 @@ const SignUpPage = () => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	const handleImageChange = async (e) => {
+	const handleImageChange = (e) => {
 		const file = e.target.files[0];
 		if (!file) return;
 
 		const reader = new FileReader();
 		reader.readAsDataURL(file);
 		reader.onloadend = () => {
-			setFormData(prev => ({ ...prev, profileImg: reader.result }));
+			setFormData((prev) => ({ ...prev, profileImg: reader.result }));
 		};
 	};
 
@@ -94,10 +102,7 @@ const SignUpPage = () => {
 						</div>
 					</div>
 
-					<form
-						onSubmit={handleSubmit}
-						className="w-full max-w-md space-y-4 text-white"
-					>
+					<form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 text-white">
 						{/* Email */}
 						<label className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg border border-white/20">
 							<MdOutlineMail className="text-xl text-purple-300" />
@@ -166,12 +171,13 @@ const SignUpPage = () => {
 					</form>
 
 					{/* Link to Login */}
-					<div className="mt-6 w-full max-w-md text-center">
-						<p className="text-white text-sm">Already have an account?</p>
-						<Link to="/login">
-							<button className="w-full mt-2 py-3 border border-purple-500 text-purple-300 rounded-full hover:bg-purple-600/20 transition">
-								Sign In
-							</button>
+					<div className="text-center mt-6 text-white/80">
+						<p>Already have an account?</p>
+						<Link
+							to="/login"
+							className="inline-block mt-2 text-[#b99aff] hover:underline"
+						>
+							Sign In
 						</Link>
 					</div>
 				</div>
