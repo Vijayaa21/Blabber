@@ -106,7 +106,7 @@ export const likeUnlikePost = async (req, res) => {
 			await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
 
 			const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
-			res.status(200).json(updatedLikes);
+			res.status(200).json({ likes: updatedLikes, likeCount: updatedLikes.length });
 		} else {
 			// Like post
 			post.likes.push(userId);
@@ -121,7 +121,7 @@ export const likeUnlikePost = async (req, res) => {
 			await notification.save();
 
 			const updatedLikes = post.likes;
-			res.status(200).json(updatedLikes);
+			res.status(200).json({ likes: updatedLikes, likeCount: updatedLikes.length });
 		}
 	} catch (error) {
 		console.log("Error in likeUnlikePost controller: ", error);
@@ -129,53 +129,66 @@ export const likeUnlikePost = async (req, res) => {
 	}
 };
 
+
 export const getAllPosts = async (req, res) => {
-	try {
-		const posts = await Post.find()
-			.sort({ createdAt: -1 })
-			.populate({
-				path: "user",
-				select: "-password",
-			})
-			.populate({
-				path: "comments.user",
-				select: "-password",
-			});
+  try {
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
 
-		if (posts.length === 0) {
-			return res.status(200).json([]);
-		}
+    if (posts.length === 0) {
+      return res.status(200).json([]);
+    }
 
-		res.status(200).json(posts);
-	} catch (error) {
-		console.log("Error in getAllPosts controller: ", error);
-		res.status(500).json({ error: "Internal server error" });
-	}
+    const postsWithLikeCount = posts.map((post) => ({
+      ...post.toObject(),
+      likeCount: post.likes.length,
+    }));
+
+    res.status(200).json(postsWithLikeCount);
+  } catch (error) {
+    console.log("Error in getAllPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
+
 
 export const getLikedPosts = async (req, res) => {
-	const userId = req.params.id;
+  const userId = req.params.id;
 
-	try {
-		const user = await User.findById(userId);
-		if (!user) return res.status(404).json({ error: "User not found" });
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-		const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
-			.populate({
-				path: "user",
-				select: "-password",
-			})
-			.populate({
-				path: "comments.user",
-				select: "-password",
-			});
+    const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
 
-		res.status(200).json(likedPosts);
-	} catch (error) {
-		console.log("Error in getLikedPosts controller: ", error);
-		res.status(500).json({ error: "Internal server error" });
-	}
+    const postsWithLikeCount = likedPosts.map((post) => ({
+      ...post.toObject(),
+      likeCount: post.likes.length,
+    }));
+
+    res.status(200).json(postsWithLikeCount);
+  } catch (error) {
+    console.log("Error in getLikedPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
+
 
 export const getFollowingPosts = async (req, res) => {
 	try {
@@ -196,12 +209,18 @@ export const getFollowingPosts = async (req, res) => {
 				select: "-password",
 			});
 
-		res.status(200).json(feedPosts);
+		const postsWithLikeCount = feedPosts.map(post => ({
+			...post.toObject(),
+			likeCount: post.likes.length,
+		}));
+
+		res.status(200).json(postsWithLikeCount);
 	} catch (error) {
 		console.log("Error in getFollowingPosts controller: ", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
 
 export const getUserPosts = async (req, res) => {
 	try {
@@ -221,12 +240,18 @@ export const getUserPosts = async (req, res) => {
 				select: "-password",
 			});
 
-		res.status(200).json(posts);
+		const postsWithLikeCount = posts.map(post => ({
+			...post.toObject(),
+			likeCount: post.likes.length,
+		}));
+
+		res.status(200).json(postsWithLikeCount);
 	} catch (error) {
 		console.log("Error in getUserPosts controller: ", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
 
 export const updatePost = async (req, res) => {
   try {
