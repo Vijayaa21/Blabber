@@ -1,4 +1,4 @@
-#  Blabber
+#  Blabber - Feature Branch
 
 Blabber is a modern full-stack social media web application built using the **MERN stack**. It allows users to register, log in, post updates, follow other users, receive notifications, and maintain profiles. It uses **JWT authentication** with secure HttpOnly cookies and Cloudinary for profile image uploads.
 
