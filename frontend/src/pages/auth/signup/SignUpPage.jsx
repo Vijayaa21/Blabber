@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -21,6 +21,7 @@ const SignUpPage = () => {
 
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const minPasswordLength = 6;
 
 	const { mutate, isError, isPending, error } = useMutation({
 		mutationFn: async (formData) => {
@@ -76,12 +77,23 @@ const SignUpPage = () => {
 		};
 	};
 
+	// Validation logic
+	const isFormValid = useMemo(() => {
+		const { email, username, fullName, password } = formData;
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return (
+			emailRegex.test(email.trim()) &&
+			username.trim() !== "" &&
+			fullName.trim() !== "" &&
+			password.length >= minPasswordLength
+		);
+	}, [formData]);
+
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
 			<div className="w-full max-w-4xl bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 text-white">
 				<div className="flex flex-col items-center">
 					<XSvg className="w-20 mb-4 fill-white drop-shadow-lg" />
-
 					<h1 className="text-3xl font-bold mb-6">Create your account</h1>
 
 					{/* Profile Picture Upload */}
@@ -158,7 +170,12 @@ const SignUpPage = () => {
 						{/* Submit Button */}
 						<button
 							type="submit"
-							className="w-full py-3 bg-purple-600 hover:bg-purple-700 transition rounded-full shadow-lg font-semibold"
+							disabled={!isFormValid || isPending}
+							className={`w-full py-3 rounded-full shadow-lg font-semibold transition ${
+								isFormValid && !isPending
+									? "bg-purple-600 hover:bg-purple-700"
+									: "bg-gray-500 cursor-not-allowed"
+							}`}
 						>
 							{isPending ? "Signing up..." : "Sign Up"}
 						</button>

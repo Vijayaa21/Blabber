@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
 import XSvg from "../../../components/svgs/X";
@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 const LoginPage = () => {
 	const [formData, setFormData] = useState({ username: "", password: "" });
 	const queryClient = useQueryClient();
+
+	const minPasswordLength = 6;
 
 	const {
 		mutate: loginMutation,
@@ -19,8 +21,7 @@ const LoginPage = () => {
 				method: "POST",
 				credentials: "include",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ emailOrUsername: username, password })
-
+				body: JSON.stringify({ emailOrUsername: username, password }),
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Login failed");
@@ -39,13 +40,21 @@ const LoginPage = () => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
+	// Validation
+	const isFormValid = useMemo(() => {
+		const { username, password } = formData;
+		return (
+			username.trim() !== "" && password.length >= minPasswordLength
+		);
+	}, [formData]);
+
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
 			<div
 				className="w-full max-w-md rounded-2xl px-6 py-8 
-        bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 
-        backdrop-blur-xl border border-white/10 
-        shadow-xl text-white"
+				bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 
+				backdrop-blur-xl border border-white/10 
+				shadow-xl text-white"
 			>
 				{/* Logo */}
 				<div className="flex justify-center mb-6">
@@ -81,7 +90,12 @@ const LoginPage = () => {
 
 					<button
 						type="submit"
-						className="w-full py-3 rounded-full bg-gradient-to-r from-[#7B2FF7] to-[#2C3E50] font-semibold hover:opacity-90 transition"
+						disabled={!isFormValid || isPending}
+						className={`w-full py-3 rounded-full font-semibold transition ${
+							isFormValid && !isPending
+								? "bg-gradient-to-r from-[#7B2FF7] to-[#2C3E50] hover:opacity-90"
+								: "bg-gray-500 cursor-not-allowed"
+						}`}
 					>
 						{isPending ? "Logging in..." : "Login"}
 					</button>
@@ -90,15 +104,16 @@ const LoginPage = () => {
 						<p className="text-red-400 text-sm text-center">{error.message}</p>
 					)}
 				</form>
+
 				<div className="text-center">
 					<Link
 						to="/forgot-password"
 						className="inline-block mt-2 text-[#b99aff] hover:underline mt-4"
-						>
-							Forgot Password
+					>
+						Forgot Password
 					</Link>
 				</div>
-				
+
 				<div className="text-center mt-6 text-white/80">
 					<p>Don’t have an account?</p>
 					<Link
