@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
+import UserListModal from "../../components/common/UserListModal"; 
 
 import { POSTS } from "../../utils/db/dummy";
 
@@ -57,6 +58,31 @@ const ProfilePage = () => {
 	const isMyProfile = authUser._id === user?._id;
 	const memberSinceDate = formatMemberSinceDate(user?.createdAt);
 	const amIFollowing = authUser?.following.includes(user?._id);
+
+	const [showModal, setShowModal] = useState(false);
+	const [modalTitle, setModalTitle] = useState("");
+	const [modalUsers, setModalUsers] = useState([]);
+
+	const handleOpenModal = async (type) => {
+		setModalTitle(type === "followers" ? "Followers" : "Following");
+		setShowModal(true);
+		try {
+			const res = await fetch(`/api/users/${user._id}/${type}`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+			});
+			const data = await res.json();
+			setModalUsers(data);
+		} catch (err) {
+			console.error("Failed to fetch user list", err);
+		}
+	};
+
+	const handleCloseModal = () => {
+		setShowModal(false);
+		setModalUsers([]);
+	};
 
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
@@ -190,14 +216,17 @@ const ProfilePage = () => {
 								</span>
 								</div>
 
-								<div className='flex gap-5 mt-2 text-sm'>
-								<span>
-									<span className='font-semibold'>{user?.following.length}</span> <span className='text-gray-400'>Following</span>
-								</span>
-								<span>
-									<span className='font-semibold'>{user?.followers.length}</span> <span className='text-gray-400'>Followers</span>
-								</span>
-								</div>
+<div className='flex gap-5 mt-2 text-sm'>
+				<span onClick={() => handleOpenModal("following")} className='cursor-pointer hover:underline'>
+					<span className='font-semibold'>{user?.following.length}</span>{" "}
+					<span className='text-gray-400'>Following</span>
+				</span>
+				<span onClick={() => handleOpenModal("followers")} className='cursor-pointer hover:underline'>
+					<span className='font-semibold'>{user?.followers.length}</span>{" "}
+					<span className='text-gray-400'>Followers</span>
+				</span>
+			</div>
+
 							</div>
 							</div>
 							<div className='flex w-full border-b border-gray-800 text-sm font-medium mt-4 px-6'>
@@ -222,6 +251,14 @@ const ProfilePage = () => {
 
 					<Posts feedType={feedType} username={username} userId={user?._id} />
 				</div>
+
+				<UserListModal
+				isOpen={showModal}
+				onClose={handleCloseModal}
+				title={modalTitle}
+				users={modalUsers}
+			/>
+
 			</div>
 		</>
 	);

@@ -147,5 +147,41 @@ export const updateUserProfile = async (req,res) => {
 		res.status(500).json({ error: error.message });
 	}}
 
+	
+// GET /api/users/:id/followers
+export const getFollowers = async (req, res) => {
+	try {
+		const user = await User.findById(req.params.id).populate(
+			'followers',
+			'username fullName profileImg'
+		);
+
+		if (!user) return res.status(404).json({ message: 'User not found' });
+
+		res.status(200).json(user.followers);
+	} catch (error) {
+		console.log('Error in getFollowers: ', error.message);
+		res.status(500).json({ error: error.message });
+	}
+};
+
+// GET /api/users/:id/following
+export const getFollowing = async (req, res) => {
+	try {
+		const user = await User.findById(req.params.id).populate(
+			'following',
+			'username fullName profileImg'
+		);
+
+		if (!user) return res.status(404).json({ message: 'User not found' });
+
+		res.status(200).json(user.following);
+	} catch (error) {
+		console.log('Error in getFollowing: ', error.message);
+		res.status(500).json({ error: error.message });
+	}
+};
+
+
 
 	
