@@ -48,7 +48,7 @@ If you find this project useful or interesting, consider **starring** 🌟 the r
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/blabber.git
+git clone https://github.com/Vijayaa21/blabber.git
 cd blabber
 ```
 
