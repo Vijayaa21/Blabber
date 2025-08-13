@@ -1,0 +1,36 @@
+name: action_on_label
+on:
+  issues:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  invalid_contribution:
+    if: github.event.action == 'labeled' && github.event.label.name == 'invalid'
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+            gh issue comment ${{ github.event.issue.html_url }} --body "@${{ github.event.issue.user.login }}
+            
+            Thank you for submitting this issue. After reviewing it, we have determined that it is invalid or does not align with our project requirement. If you believe this was a mistake, please provide more details or clarify the issue further. We appreciate your understanding and contributions."
+          fi
+  duplicate_issue:
+    if: github.event.action == 'labeled' && github.event.label.name == 'duplicate'
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+          gh issue comment ${{ github.event.issue.html_url }} --body "@${{ github.event.issue.user.login }} 
+            
+            🔄 It looks like a duplicate issue has been raised. We kindly ask you to review the existing issues in our repository before submitting new ones. Please make sure to follow our [CODE OF CONDUCT](https://github.com/maniyaom/Movie-Ticket-Booking/blob/master/CODE_OF_CONDUCT.md) while participating. Your cooperation helps us maintain a clear and organized issue section! Thank you! 🙏"
+            gh issue close ${{ github.event.issue.html_url }} \
+            --reason "not planned"
+          fi
