@@ -48,7 +48,7 @@ If you find this project useful or interesting, consider **starring** 🌟 the r
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/blabber.git
+git clone https://github.com/Vijayaa21/blabber.git
 cd blabber
 ```
 
@@ -75,7 +75,11 @@ npm install
 ### 3. Create Environment Files
 
 #### ✅ `.env` for Backend (in `/backend`)
-
+```
+cd backend
+mv .env.example .env
+```
+#### Then edit .env and add your credentials:
 ```env
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
