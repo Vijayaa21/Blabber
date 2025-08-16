@@ -66,7 +66,14 @@ const ForgotPassword = () => {
 
 	// Validation helpers
 	const isStep1Valid = email.trim() !== "";
-	const isStep2Valid = otp.trim() !== "" && newPassword.trim() !== "";
+	//validate password standards
+	const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasLowercase = /[a-z]/.test(newPassword);
+    const hasNumber = /\d/.test(newPassword);
+    const hasSpecial = /[!@#$%^&*]/.test(newPassword);
+    const hasMinLength = newPassword.length >= 8;
+    const isStep2Valid = otp.trim() !== "" && hasUppercase && hasLowercase && hasNumber && hasSpecial && hasMinLength;
+
 
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
@@ -118,6 +125,13 @@ const ForgotPassword = () => {
 									required
 								/>
 							</div>
+							<div className="text-xs text-white/70 mt-1 space-y-1">
+                            <p style={{ color: /[A-Z]/.test(newPassword) ? "limegreen" : "red" }}>• Contains uppercase</p>
+                            <p style={{ color: /[a-z]/.test(newPassword) ? "limegreen" : "red" }}>• Contains lowercase</p>
+                            <p style={{ color: /\d/.test(newPassword) ? "limegreen" : "red" }}>• Contains number</p>
+                            <p style={{ color: /[!@#$%^&*]/.test(newPassword) ? "limegreen" : "red" }}>• Contains special character</p>
+                            <p style={{ color: newPassword.length >= 8 ? "limegreen" : "red" }}>• Minimum 8 characters</p>
+                            </div>
 						</>
 					)}
 

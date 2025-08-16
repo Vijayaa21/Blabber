@@ -21,8 +21,12 @@ const SignUpPage = () => {
 
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const minPasswordLength = 6;
-
+	const minPasswordLength = 8;
+    const validatePassword = (password) => {
+    // At least 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return regex.test(password);
+    };
 	const { mutate, isError, isPending, error } = useMutation({
 		mutationFn: async (formData) => {
 			const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
@@ -79,16 +83,25 @@ const SignUpPage = () => {
 
 	// Validation logic
 	const isFormValid = useMemo(() => {
-		const { email, username, fullName, password } = formData;
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return (
-			emailRegex.test(email.trim()) &&
-			username.trim() !== "" &&
-			fullName.trim() !== "" &&
-			password.length >= minPasswordLength
-		);
-	}, [formData]);
+    const { email, username, fullName, password } = formData;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*]/.test(password);
+    const hasMinLength = password.length >= 8;
 
+    return (
+    emailRegex.test(email.trim()) &&
+    username.trim() !== "" &&
+    fullName.trim() !== "" &&
+    hasUppercase &&
+    hasLowercase &&
+    hasNumber &&
+    hasSpecial &&
+    hasMinLength
+    );
+    }, [formData]);
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
 			<div className="w-full max-w-4xl bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 text-white">
@@ -166,7 +179,13 @@ const SignUpPage = () => {
 								className="bg-transparent w-full outline-none text-white placeholder:text-white/60"
 							/>
 						</label>
-
+                        <div className="text-xs text-white/70 mt-1 space-y-1">
+                            <p style={{ color: /[A-Z]/.test(formData.password) ? "limegreen" : "white" }}>• Contains uppercase</p>
+                            <p style={{ color: /[a-z]/.test(formData.password) ? "limegreen" : "white" }}>• Contains lowercase</p>
+                            <p style={{ color: /\d/.test(formData.password) ? "limegreen" : "white" }}>• Contains number</p>
+                            <p style={{ color: /[!@#$%^&*]/.test(formData.password) ? "limegreen" : "white" }}>• Contains special character</p>
+                            <p style={{ color: formData.password.length >= 8 ? "limegreen" : "white" }}>• Minimum 8 characters</p>
+                        </div>
 						{/* Submit Button */}
 						<button
 							type="submit"

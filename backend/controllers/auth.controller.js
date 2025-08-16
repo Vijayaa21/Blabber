@@ -29,15 +29,11 @@ export const signup = async (req, res) => {
     if (!username || !fullName || !email || !password)
       return res.status(400).json({ error: "All fields are required" });
 
-    if (
-      password.length < 6 ||
-      !/\d/.test(password) ||
-      !/[!@#$%^&*]/.test(password)
-    ) {
-      return res.status(400).json({
-        error: "Password must be at least 6 characters, contain a number and a special character",
-      });
-    }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(password)) {
+  return res.status(400).json({
+    error: "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character",
+  });
+  }
     if (isPasswordTooSimilar(password, username, fullName, email)) {
       return res.status(400).json({error: "Password cannot contain parts of username, full name, or email"});
     }
@@ -194,16 +190,12 @@ export const resetPassword = async (req, res) => {
     if (user.resetOtpExpiry < Date.now())
       return res.status(400).json({ error: "OTP expired" });
 
-    if (
-      newPassword.length < 6 ||
-      !/\d/.test(newPassword) ||
-      !/[!@#$%^&*]/.test(newPassword)
-    ) {
-      return res.status(400).json({
-        error:
-          "Password must be at least 6 characters, contain a number and a special character",
-      });
-    }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(newPassword)) {
+  return res.status(400).json({
+    error: "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character",
+  });
+}
+
 
     if (
       isPasswordTooSimilar(newPassword, user.username, user.fullName, user.email)
@@ -213,7 +205,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(newPassword, 12);
     user.resetOtp = "";
     user.resetOtpExpiry = 0;
     await user.save();
