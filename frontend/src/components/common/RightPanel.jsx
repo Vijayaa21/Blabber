@@ -61,39 +61,37 @@ const RightPanel = () => {
 									cursor-pointer
 								"
 							>
-								<div className="flex gap-3 items-center">
-									<div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm">
+								<div className="flex items-center gap-3 flex-1 min-w-0">
+									<div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm flex-shrink-0">
 										<img
 											src={user.profileImg || "/avatar-placeholder.png"}
 											alt={user.fullName}
 											className="w-full h-full object-cover"
 										/>
 									</div>
-
-									<div className="flex flex-col">
-										<span className="font-semibold text-white truncate max-w-[120px]">
+									<div className="flex flex-col min-w-0">
+										<span className="font-semibold text-white truncate max-w-[100px]" title={user.fullName}>
 											{user.fullName}
 										</span>
-										<span className="text-sm text-slate-400">@{user.username}</span>
+										<span className="text-sm text-slate-400 truncate max-w-[100px]" title={user.username}>
+											@{user.username}
+										</span>
 									</div>
-								
-
-								<div>
-									<button
-										className="
-											bg-white text-black hover:opacity-90 
-											rounded-full btn-sm px-4 py-1 font-semibold
-											transition
-										"
-										onClick={(e) => {
-											e.preventDefault();
-											follow(user._id);
-										}}
-										disabled={isPending}
-									>
-										{isPending ? <LoadingSpinner size="sm" /> : "Follow"}
-									</button></div>
 								</div>
+								<button
+									className="
+										bg-white text-black hover:opacity-90 
+										rounded-full btn-sm px-4 py-1 font-semibold
+										transition flex-shrink-0
+									"
+									onClick={(e) => {
+										e.preventDefault();
+										follow(user._id);
+									}}
+									disabled={isPending}
+								>
+									{isPending ? <LoadingSpinner size="sm" /> : "Follow"}
+								</button>
 							</Link>
 						))}
 				</div>
