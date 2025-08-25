@@ -37,6 +37,7 @@ const HomePage = () => {
       }
     },
     enabled: !!authUser,
+    placeholderData: (previousData) => previousData,
   });
 
   return (
@@ -72,7 +73,12 @@ const HomePage = () => {
       )}
 
       {/* POSTS */}
-      <Posts posts={posts} isLoading={isLoading} isRefetching={isRefetching} />
+      <Posts
+        posts={posts}
+        isLoading={isLoading}
+        isRefetching={isRefetching}
+        feedType={feedType}
+      />
     </div>
   );
 };
