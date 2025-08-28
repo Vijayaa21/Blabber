@@ -1,9 +1,11 @@
 @import "tailwindcss";
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0F172A; /* match your page bg */
+  background-color: #0f172a; /* match your page bg */
 }
 
 @plugin "daisyui/theme" {
@@ -17,13 +19,13 @@ html, body, #root {
   --color-base-300: #24243e; /* Blue-Violet Overlay */
   --color-base-content: #f1efff; /* Soft text */
 
-  --color-primary: #7B2FF7; /* Vivid Purple */
+  --color-primary: #7b2ff7; /* Vivid Purple */
   --color-primary-content: #fefaff; /* Light text on purple */
 
-  --color-secondary: #4A00E0; /* Deep Indigo */
+  --color-secondary: #4a00e0; /* Deep Indigo */
   --color-secondary-content: #ffffff;
 
-  --color-accent: #8E2DE2; /* Purple Gradient Edge */
+  --color-accent: #8e2de2; /* Purple Gradient Edge */
   --color-accent-content: #ffffff;
 
   --color-neutral: #0f0c29;
