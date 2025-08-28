@@ -13,6 +13,8 @@ import {
   deleteComment,
   getPostById,
   editComment,
+  bookmarkUnbookmarkPost, 
+  getBookmarkedPosts,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
@@ -29,5 +31,7 @@ router.delete("/:id", protectRoute, deletePost);
 router.put("/:id", protectRoute, updatePost);
 router.delete("/:postId/comment/:commentId", protectRoute, deleteComment);
 router.get("/:id", protectRoute, getPostById);
+router.post("/bookmark/:id", protectRoute, bookmarkUnbookmarkPost);
+router.get("/bookmarks/:id", protectRoute, getBookmarkedPosts);
 
 export default router;

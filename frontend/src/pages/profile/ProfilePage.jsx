@@ -61,7 +61,9 @@ const ProfilePage = () => {
         const endpoint =
           feedType === "posts"
             ? `/api/posts/user/${username}`
-            : `/api/posts/likes/${user._id}`;
+            : feedType === "likes"
+            ? `/api/posts/likes/${user._id}`
+            : `/api/posts/bookmarks/${user._id}`;
 
         const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
           credentials: "include",
@@ -285,7 +287,7 @@ const ProfilePage = () => {
               {/* END: New header block */}
               {/* Feed Tabs */}
               <div className="flex justify-around border-b border-gray-700">
-                {["posts", "likes"].map((type) => (
+                {["posts", "likes", "bookmarks"].map((type) => (
                   <div
                     key={type}
                     className="flex-1 text-center"

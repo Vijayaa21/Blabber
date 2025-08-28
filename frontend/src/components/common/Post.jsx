@@ -10,19 +10,17 @@ import { toast } from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 
-const Post = ({ post, feedType }) => {
+const Post = ({ post }) => {
   const [comment, setComment] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
-  if (!authUser) {
-    return <PostSkeleton />;
-  }
-
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser._id);
+  const isBookmarked = post.bookmarks?.includes(authUser._id);
+
   const isMyPost = post.user && authUser._id === post.user._id;
   const formattedDate = formatPostDate(post.createdAt);
 
@@ -68,11 +66,47 @@ const Post = ({ post, feedType }) => {
         }
         return data;
       } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: (updatedLikes) => {
+      queryClient.setQueryData(["posts"], (oldData) => {
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            return { ...p, likes: updatedLikes };
+          }
+          return p;
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: bookmarkPost, isPending: isBookmarking } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/posts/bookmark/${post._id}`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+        return data;
+      } catch (error) {
         throw new Error(error.message);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+      // Invalidate relevant queries to refetch posts and update the UI
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feedPosts"] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -97,10 +131,11 @@ const Post = ({ post, feedType }) => {
     },
     onMutate: async () => {
       setIsCommenting(true);
-      await queryClient.cancelQueries({ queryKey: ["posts", feedType] });
-      const previousPosts = queryClient.getQueryData(["posts", feedType]);
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
 
-      queryClient.setQueryData(["posts", feedType], (oldData) => {
+      const previousPosts = queryClient.getQueryData(["posts"]);
+
+      queryClient.setQueryData(["posts"], (oldData) => {
         if (!oldData || !Array.isArray(oldData)) return oldData;
         return oldData.map((p) => {
           if (p._id === post._id) {
@@ -125,13 +160,13 @@ const Post = ({ post, feedType }) => {
     onError: (err, variables, context) => {
       toast.error(err.message);
       if (context?.previousPosts) {
-        queryClient.setQueryData(["posts", feedType], context.previousPosts);
+        queryClient.setQueryData(["posts"], context.previousPosts);
       }
     },
     onSettled: () => {
       setIsCommenting(false);
       setComment("");
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 
@@ -146,6 +181,11 @@ const Post = ({ post, feedType }) => {
   const handleLikePost = () => {
     if (isLiking) return;
     likePost();
+  };
+
+  const handleBookmarkPost = () => {
+    if (isBookmarking) return;
+    bookmarkPost();
   };
 
   // Close dialog on Escape key
@@ -333,10 +373,21 @@ const Post = ({ post, feedType }) => {
               </span>
             </div>
           </div>
-
-          {/* Bookmark */}
           <div className="flex w-1/3 justify-end gap-2 items-center">
-            <GiBookmark className="w-4 h-4 text-slate-500 cursor-pointer" />
+            {isBookmarking ? (
+              <LoadingSpinner size="sm" />
+            ) : (
+              <div
+                className="flex gap-1 items-center group cursor-pointer"
+                onClick={handleBookmarkPost}
+              >
+                {isBookmarked ? (
+                  <GiBookmark className="w-4 h-4 text-sky-500" />
+                ) : (
+                  <FaRegBookmark className="w-4 h-4 text-slate-500 group-hover:text-sky-500" />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
