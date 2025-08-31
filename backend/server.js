@@ -7,7 +7,8 @@ import dotenv from"dotenv";
 import connectMongoDB from "./db/connectMongoDB.js";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
-dotenv.config()
+dotenv.config({ path: './backend/.env' })
+
 
 const app =  express();
 const BASE_URL = "https://blabber-av0p.onrender.com/"; // example
