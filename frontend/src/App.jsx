@@ -13,13 +13,19 @@ import VerifyOtpPage from "./pages/auth/verifyOtp/VerifyOTP";
 import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
 import LoadingSpinner from "./components/common/LoadingSpinner";
+import Footer from "./components/common/Footer"; // Import the Footer component
 
 import "./style.css";
 
 function App() {
   const location = useLocation();
 
-  const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-otp"].includes(location.pathname);
+  const isAuthPage = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/verify-otp",
+  ].includes(location.pathname);
 
   const { data: authUser, isLoading } = useQuery({
     queryKey: ["authUser"],
@@ -68,28 +74,51 @@ function App() {
       {isAuthPage ? (
         // Render only the auth page without layout
         <Routes>
-          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
+          <Route
+            path="/login"
+            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/signup"
+            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
         </Routes>
       ) : (
         // Render the full layout for logged-in routes
-        <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
-          {authUser && <Sidebar />}
-          <main className="flex-1 p-4 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
-              <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
-              <Route path="/profile/:username" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </main>
-          {authUser && (
-            <aside className="w-76 hidden lg:block p-2">
-              <RightPanel />
-            </aside>
-          )}
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-primary to-secondary text-base-content">
+          <div className="flex flex-1">
+            {authUser && <Sidebar />}
+            <main className="flex-1 p-4 overflow-y-auto">
+              <Routes>
+                <Route
+                  path="/"
+                  element={authUser ? <HomePage /> : <Navigate to="/login" />}
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    authUser ? <NotificationPage /> : <Navigate to="/login" />
+                  }
+                />
+                <Route
+                  path="/profile/:username"
+                  element={
+                    authUser ? <ProfilePage /> : <Navigate to="/login" />
+                  }
+                />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </main>
+            {authUser && (
+              <aside className="w-76 hidden lg:block p-2">
+                <RightPanel />
+              </aside>
+            )}
+          </div>
+          {/* Add Footer here - only show if user is authenticated */}
+          {authUser && <Footer />}
         </div>
       )}
       <Toaster position="top-right" />
