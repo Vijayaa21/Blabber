@@ -1,5 +1,7 @@
 import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const Posts = ({ feedType, username, userId }) => {
 	const getPostEndpoint = () => {
@@ -68,6 +70,6 @@ const Posts = ({ feedType, username, userId }) => {
 				</div>
 			)}
 		</>
-	)
+	);
 };
 export default Posts;
