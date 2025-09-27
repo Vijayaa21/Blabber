@@ -1,5 +1,13 @@
-const XSvg = (props) => (
-	<svg width="50" height="50" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Blabber logo">
+// Responsive Blabber logo icon. Width/height controlled via Tailwind classes passed in.
+const XSvg = ({ className = "", ...props }) => (
+  <svg
+    viewBox="0 0 100 100"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="Blabber logo"
+    {...props}
+  >
   <defs>
     <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#7B2FF7"/>  
@@ -14,7 +22,6 @@ const XSvg = (props) => (
     d="M35 70 L35 30 Q35 20 50 20 Q65 20 65 40 Q65 55 50 55 Q65 55 65 70 Q65 80 50 80 Q35 80 35 70 Z
        M50 30 Q42 30 42 40 Q42 50 50 50 Q58 50 58 40 Q58 30 50 30 Z"
   />
-</svg>
-
+  </svg>
 );
 export default XSvg;
