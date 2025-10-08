@@ -29,7 +29,7 @@ const Sidebar = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       toast.success("Logged out successfully");
-      navigate("/"); 
+      navigate("/");
     },
     onError: () => {
       toast.error("Logout failed");
@@ -85,26 +85,26 @@ const Sidebar = () => {
           <Link
             to={`/profile/${authUser.username}`}
             className='mt-auto flex gap-3 items-center py-2 px-2 sm:px-3 rounded-xl transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-500 duration-300'>
-						<div className='w-9 h-9 rounded-full overflow-hidden'>
-								<img src={authUser?.profileImg || "/avatar-placeholder.png"} 
-                  className='w-full h-full object-cover block'
-/>
-						</div>
-						<div className='flex justify-between flex-1'>
-							<div className='hidden md:block'>
+            <div className='w-9 h-9 rounded-full overflow-hidden'>
+              <img src={authUser?.profileImg || "/avatar-placeholder.png"}
+                className='w-full h-full object-cover block'
+              />
+            </div>
+            <div className='flex justify-between flex-1'>
+              <div className='hidden md:block'>
                 <p className='font-semibold text-sm truncate'>{authUser?.fullName}</p>
                 <p className='text-xs text-white/60 truncate'>@{authUser?.username}</p>
               </div>
-							<BiLogOut
-								className='w-5 h-5 cursor-pointer'
-								onClick={(e) => {
-									e.preventDefault();
-									logout();
-								}}
-							/>
-						</div>
-					</Link>
-				)}
+              <BiLogOut
+                className='w-5 h-5 cursor-pointer'
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+              />
+            </div>
+          </Link>
+        )}
 
 
       </div>
