@@ -1,17 +1,25 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
 import XSvg from "../../../components/svgs/X";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+// Firebase imports
+import { auth, googleProvider } from "../../../utils/config/firebase";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [googleUser, setGoogleUser] = useState(null);
   const queryClient = useQueryClient();
+
+  const navigate = useNavigate();
 
   const minPasswordLength = 6;
 
+  // React Query login mutation (for your API login)
   const {
     mutate: loginMutation,
     isPending,
@@ -45,6 +53,27 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Google Login
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleGoogleLogout = async () => {
+    await signOut(auth);
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setGoogleUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Validation
   const isFormValid = useMemo(() => {
     const { username, password } = formData;
@@ -66,6 +95,7 @@ const LoginPage = () => {
 
         <h1 className="text-3xl font-bold text-center mb-4">Log in</h1>
 
+        {/* Normal Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-3 border border-white/20 rounded-lg px-4 py-2 bg-white/5">
             <MdOutlineMail className="text-xl" />
@@ -114,6 +144,33 @@ const LoginPage = () => {
             <p className="text-red-400 text-sm text-center">{error.message}</p>
           )}
         </form>
+
+        {/* Google Login */}
+        <div className="mt-6">
+          {googleUser ? (
+            <div className="text-center">
+              <p className="mb-2">Welcome {googleUser.displayName}</p>
+              <img
+                src={googleUser.photoURL}
+                alt="profile"
+                className="w-12 h-12 rounded-full mx-auto"
+              />
+              <button
+                onClick={handleGoogleLogout}
+                className="mt-3 w-full py-2 rounded-full bg-red-500 hover:bg-red-600 font-semibold"
+              >
+                Logout from Google
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGoogleLogin}
+              className="mt-3 w-full py-3 rounded-full font-semibold bg-white text-black hover:opacity-90"
+            >
+              Continue with Google
+            </button>
+          )}
+        </div>
 
         <div className="text-center">
           <Link
