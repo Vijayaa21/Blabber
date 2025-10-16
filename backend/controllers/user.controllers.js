@@ -89,63 +89,142 @@ export const getSuggestedUsers = async (req, res) => {
 	}
 }
 
-export const updateUserProfile = async (req,res) => {
-	const { fullName, email, username,  currentPassword, newPassword, bio, link } = req.body;
-	let { profileImg, coverImg } = req.body;
+export const updateUserProfile = async (req, res) => {
+  const { fullName, email, username, currentPassword, newPassword, bio, link } = req.body;
+  let { profileImg, coverImg } = req.body;
 
-	const userId = req.user._id;
+  const userId = req.user._id;
 
-	try{
-		let user = await User.findById(userId);
-		if(!user) return res.status(404).json({message: "User not found"});
+  try {
+    let user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-		if ((!currentPassword && newPassword) || (!newPassword && currentPassword)) {
-			return res.status(400).json({ message: "Please provide both current and new password" });
-		}
+    // Password change logic - available for all users
+    if (currentPassword && newPassword) {
+      // For Google OAuth users, they can set a new password directly
+      if (user.password === "google") {
+        // Google OAuth user setting password for the first time
+        if (newPassword.length < 6) {
+          return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+      } else {
+        // Regular user - verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
+        if (newPassword.length < 6) {
+          return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+      }
+    } else if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+      return res.status(400).json({ message: "Please provide both current and new password" });
+    }
 
-		if (currentPassword && newPassword) {
-			const isMatch = await bcrypt.compare(currentPassword, user.password);
-			if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
-			if (newPassword.length < 6) {
-				return res.status(400).json({ message: "New password must be at least 6 characters long" });
-			}
-			const salt = await bcrypt.genSalt(10);
-			const hashedPassword = await bcrypt.hash(newPassword, salt);
-			user.password = hashedPassword;
-		}
-		 if (profileImg){
-			if(user.profileImg){
-				await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]);
+    // Handle profile image upload
+    if (profileImg && profileImg !== user.profileImg) {
+      // Delete old profile image from cloudinary if it exists and is not the default
+      if (user.profileImg && !user.profileImg.includes("default") && !user.profileImg.includes("googleusercontent")) {
+        try {
+          const publicId = user.profileImg.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudinaryError) {
+          console.log("Error deleting old profile image:", cloudinaryError.message);
+        }
+      }
+      
+      // Upload new profile image
+      try {
+        const uploadedResponse = await cloudinary.uploader.upload(profileImg);
+        profileImg = uploadedResponse.secure_url;
+      } catch (uploadError) {
+        console.log("Error uploading profile image:", uploadError.message);
+        return res.status(400).json({ message: "Error uploading profile image" });
+      }
+    } else {
+      // Keep the existing profile image
+      profileImg = user.profileImg;
+    }
 
-			}
-			const uploadedResponse = await cloudinary.uploader.upload(profileImg);	
-			profileImg = uploadedResponse.secure_url;
-		 }
-		 if(user.coverImg){
-			await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]);
-		}
-		if (coverImg) {
-			const uploadedResponse = await cloudinary.uploader.upload(coverImg);
-			coverImg = uploadedResponse.secure_url;
-		 }
+    // Handle cover image upload - FIXED THIS PART
+    if (coverImg) {
+      // If coverImg is provided and it's different from current one, or if it's empty string (to remove cover)
+      if (coverImg !== user.coverImg) {
+        // Delete old cover image from cloudinary if it exists
+        if (user.coverImg && !user.coverImg.includes("default")) {
+          try {
+            const publicId = user.coverImg.split("/").pop().split(".")[0];
+            await cloudinary.uploader.destroy(publicId);
+          } catch (cloudinaryError) {
+            console.log("Error deleting old cover image:", cloudinaryError.message);
+          }
+        }
+        
+        // If coverImg is not empty, upload new one
+        if (coverImg.trim() !== "") {
+          try {
+            const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+            coverImg = uploadedResponse.secure_url;
+          } catch (uploadError) {
+            console.log("Error uploading cover image:", uploadError.message);
+            return res.status(400).json({ message: "Error uploading cover image" });
+          }
+        } else {
+          // If coverImg is empty string, set to empty (remove cover)
+          coverImg = "";
+        }
+      }
+    } else {
+      // Keep the existing cover image
+      coverImg = user.coverImg;
+    }
 
-		user.fullName = fullName || user.fullName;
-		user.email = email || user.email;
-		user.username = username || user.username;
-		user.bio = bio || user.bio;
-		user.link = link || user.link;
-		user.profileImg = profileImg || user.profileImg;
-		user.coverImg = coverImg || user.coverImg;
-		
-		user = await user.save();
+    // Check if username or email already exists (excluding current user)
+    if (username && username !== user.username) {
+      const existingUser = await User.findOne({ 
+        username, 
+        _id: { $ne: userId } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+    }
 
-		user.password = null
-		return res.status(200).json(user)
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ 
+        email, 
+        _id: { $ne: userId } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already taken" });
+      }
+    }
 
-	} catch (error) {
-		console.log("Error in updateUser: ", error.message);
-		res.status(500).json({ error: error.message });
-	}}
+    // Update user fields
+    user.fullName = fullName || user.fullName;
+    user.email = email || user.email;
+    user.username = username || user.username;
+    user.bio = bio || user.bio;
+    user.link = link || user.link;
+    user.profileImg = profileImg;
+    user.coverImg = coverImg;
+
+    user = await user.save();
+
+    // Remove password from response
+    user.password = undefined;
+
+    return res.status(200).json(user);
+
+  } catch (error) {
+    console.log("Error in updateUser: ", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 	
 // GET /api/users/:id/followers
