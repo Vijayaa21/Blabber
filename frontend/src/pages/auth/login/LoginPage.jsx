@@ -115,14 +115,7 @@ const LoginPage = () => {
           )}
         </form>
 
-        <div className="text-center">
-          <Link
-            to="/forgot-password"
-            className="inline-block mt-2 text-[#b99aff] hover:underline mt-4"
-          >
-            Forgot Password
-          </Link>
-        </div>
+        {/* Forgot Password flow removed */}
 
         <div className="text-center mt-6 text-white/80">
           <p>Don’t have an account?</p>

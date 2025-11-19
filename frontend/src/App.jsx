@@ -7,8 +7,6 @@ import LoginPage from "./pages/auth/login/LoginPage";
 import SignUpPage from "./pages/auth/signup/SignUpPage";
 import NotificationPage from "./pages/notification/NotificationPage";
 import ProfilePage from "./pages/profile/ProfilePage";
-import ForgotPassword from "./pages/auth/forgotpassword/forgotPassword";
-import VerifyOtpPage from "./pages/auth/verifyOtp/VerifyOTP";
 
 import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
@@ -19,7 +17,7 @@ import "./style.css";
 function App() {
   const location = useLocation();
 
-  const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-otp"].includes(location.pathname);
+  const isAuthPage = ["/login", "/signup"].includes(location.pathname);
 
   const { data: authUser, isLoading } = useQuery({
     queryKey: ["authUser"],
@@ -70,8 +68,7 @@ function App() {
         <Routes>
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          {/* Forgot password and OTP verification removed */}
         </Routes>
       ) : (
         // Render the full layout for logged-in routes
