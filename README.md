@@ -154,6 +154,9 @@ JWT_SECRET=your_jwt_secret
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+GOOGLE_CLIENT_ID=your_google_oauth_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret_here
+CLIENT_URL=http://localhost:3000
 ```
 
 ✅ Make sure your MongoDB database is up and running.
@@ -174,6 +177,12 @@ npm run dev
 # Start Frontend
 cd ../frontend
 npm run dev
+```
+
+#### Then edit .env and add your credentials:
+
+```env
+VITE_API_URL=http://localhost:5000
 ```
 
 #### Option 2: Use Root-Level Concurrent Script

@@ -6,6 +6,7 @@ import { FaUser, FaEye, FaEyeSlash } from "react-icons/fa";
 import XSvg from "../../../components/svgs/X";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+import { FcGoogle } from "react-icons/fc";
 
 const defaultProfile =
   "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
@@ -21,13 +22,13 @@ const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const minPasswordLength = 8;
+  
   const validatePassword = (password) => {
-    // At least 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     return regex.test(password);
   };
+
   const { mutate, isError, isPending, error } = useMutation({
     mutationFn: async (formData) => {
       const res = await fetch(
@@ -63,6 +64,10 @@ const SignUpPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleGoogleSignup = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -95,12 +100,32 @@ const SignUpPage = () => {
       hasMinLength
     );
   }, [formData]);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#0F172A]">
       <div className="w-full max-w-4xl bg-gradient-to-br from-[#7B2FF7]/30 to-[#2C3E50]/30 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 text-white">
         <div className="flex flex-col items-center">
           <XSvg className="w-20 mb-4 fill-white drop-shadow-lg" />
           <h1 className="text-3xl font-bold mb-6">Create your account</h1>
+
+          {/* Google Signup Button */}
+          <button
+            onClick={handleGoogleSignup}
+            className="w-full max-w-md flex items-center justify-center gap-3 py-3 px-4 
+            bg-white text-gray-800 rounded-lg font-semibold 
+            hover:bg-gray-100 transition duration-200 
+            border border-gray-300 mb-6"
+          >
+            <FcGoogle className="text-xl" />
+            Continue with Google
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center w-full max-w-md mb-6">
+            <div className="flex-1 h-px bg-white/20"></div>
+            <span className="px-3 text-white/60 text-sm">or</span>
+            <div className="flex-1 h-px bg-white/20"></div>
+          </div>
 
           {/* Profile Picture Upload */}
           <div className="relative w-24 h-24 mb-6">
