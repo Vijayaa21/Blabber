@@ -47,10 +47,9 @@ passport.use(
           // Update user with Google ID if not set
           if (!user.googleId) {
             user.googleId = profile.id;
-            // Also set password to "google" for existing users who are switching to Google OAuth
-            user.password = "google";
+            // Do not overwrite password for existing users when linking Google OAuth
             await user.save();
-            console.log("✅ Updated existing user with Google ID and standard password");
+            console.log("✅ Updated existing user with Google ID");
           }
           return done(null, user);
         } else {
