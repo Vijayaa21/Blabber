@@ -46,23 +46,9 @@ const SignUpPage = () => {
     },
     onSuccess: async (data) => {
       toast.success("Account created");
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/send-verify-otp`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-      const result = await res.json();
-
-      if (!res.ok) {
-        toast.error(result.error || "Failed to send OTP");
-        return;
-      }
-
-      toast.success("OTP sent to your email");
       queryClient.invalidateQueries(["authUser"]);
-      navigate(`/verify-otp?userId=${data.userId}`);
+      // Signup now signs the user in; redirect to home
+      navigate("/");
     },
     onError: (err) => {
       toast.error(err.message);

@@ -68,26 +68,7 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    verifyOtp: {
-      type: String,
-      default: "",
-    },
-    verifyOtpExpiry: {
-      type: Number,
-      default: 0,
-    },
-    isAccountVerified: {
-      type: Boolean,
-      default: false,
-    },
-    resetOtp: {
-      type: String,
-      default: "",
-    },
-    resetOtpExpiry: {
-      type: Number,
-      default: 0,
-    },
+    // Removed OTP / reset fields — verification flow removed
   },
   { timestamps: true }
 );

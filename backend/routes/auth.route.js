@@ -4,10 +4,6 @@ import {
   login,
   logout,
   getMe,
-  sendVerifyOtp,
-  verifyOtp,
-  sendResetOtp,
-  resetPassword,
 } from "../controllers/auth.controller.js";
 import {
   googleAuth,
