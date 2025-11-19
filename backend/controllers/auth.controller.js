@@ -1,11 +1,8 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import transporter from "../config/nodemailer.js";
+import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15d" });
-};
 const isPasswordTooSimilar = (password, username, fullName, email) => {
   const loweredPassword = password.toLowerCase();
   const loweredUsername = username.toLowerCase();
@@ -42,23 +39,32 @@ export const signup = async (req, res) => {
     if (userExists)
       return res.status(400).json({ error: "User already exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const salt = await bcrypt.genSalt(10);
+		const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
-      username,
-      fullName,
-      email,
-      password: hashedPassword,
-    });
+		// Step 3: Upload image to Cloudinary (if exists)
+		let uploadedProfileImg = "";
+		if (profileImg) {
+			console.log("Uploading image...");
+			const uploadRes = await cloudinary.uploader.upload(profileImg, {
+				folder: "user_profiles",
+			});
+			uploadedProfileImg = uploadRes.secure_url;
+			console.log("Uploaded Image URL:", uploadedProfileImg);
+		}
 
-    const token = generateToken(user._id);
+		// Step 4: Create user
+		const newUser = new User({
+			fullName,
+			username,
+			email,
+			password: hashedPassword,
+			profileImg: uploadedProfileImg,
+		});
 
-    res.cookie("jwt", token, {
-      maxAge: 15 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: "None",
-      secure: true,
-    });
+		await newUser.save();
+
+		generateTokenAndSetCookie(newUser._id, res);
 
     res.status(201).json({ message: "Signup successful", userId: user._id });
   } catch (err) {
@@ -68,31 +74,34 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  try {
-    const { emailOrUsername, password } = req.body;
-    const user = await User.findOne({
-      $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
-    });
+	try {
+		const { username, password } = req.body;
+		const user = await User.findOne({ username });
+		const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-    if (!user) return res.status(404).json({ error: "User not found" });
+		if (!user || !isPasswordCorrect) {
+			return res.status(400).json({ error: "Invalid username or password" });
+		}
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Invalid credentials" });
+		// ✅ Set the cookie with JWT securely
+		generateTokenAndSetCookie(user._id, res);
 
-    const token = generateToken(user._id);
-    res.cookie("jwt", token, {
-      maxAge: 15 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: "None",
-      secure: true,
-    });
-
-    res.json({ message: "Login successful", userId: user._id });
-  } catch (err) {
-    console.error("Login error:", err.message);
-    res.status(500).json({ error: "Server Error" });
-  }
+		res.status(200).json({
+			_id: user._id,
+			fullName: user.fullName,
+			username: user.username,
+			email: user.email,
+			followers: user.followers,
+			following: user.following,
+			profileImg: user.profileImg,
+			coverImg: user.coverImg,
+		});
+	} catch (error) {
+		console.log("Error in login controller", error.message);
+		res.status(500).json({ error: "Internal Server Error" });
+	}
 };
+
 
 export const logout = (req, res) => {
   try{
@@ -216,13 +225,8 @@ export const resetPassword = async (req, res) => {
     user.resetOtpExpiry = 0;
     await user.save();
 
-    const token = generateToken(user._id);
-    res.cookie("jwt", token, {
-      maxAge: 15 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: "None",
-      secure: true,
-    });
+    generateTokenAndSetCookie(user._id, res);
+
 
     res.json({ success: true, message: "Password reset successful", userId: user._id });
   } catch (err) {
