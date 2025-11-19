@@ -47,7 +47,12 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) {
+      alert("Google login is currently unavailable due to a configuration error. Please contact support.");
+      return;
+    }
+    window.location.href = `${apiUrl}/api/auth/google`;
   };
 
   // Validation
