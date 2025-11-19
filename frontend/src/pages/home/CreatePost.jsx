@@ -7,16 +7,16 @@ import { toast } from "react-hot-toast";
 import EmojiPicker from "emoji-picker-react";
 
 const CreatePost = () => {
-  const [text, setText] = useState("");
-  const [img, setImg] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const imgRef = useRef(null);
-  const emojiPickerRef = useRef(null);
-  const queryClient = useQueryClient();
+	const [text, setText] = useState("");
+	const [img, setImg] = useState(null);
+	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+	const imgRef = useRef(null);
+	const emojiPickerRef = useRef(null);
+	const queryClient = useQueryClient();
 
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
-  const {
+	const {
 		mutate: createPost,
 		isPending,
 		isError,
@@ -49,14 +49,14 @@ const CreatePost = () => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 		},
 	});
-  
-  const handleSubmit = (e) => {
+
+	const handleSubmit = (e) => {
 		e.preventDefault();
 		if (text.trim() === "") return;
 		createPost({ text, img });
 	};
 
-  const handleImgChange = (e) => {
+	const handleImgChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
 			const reader = new FileReader();
@@ -66,12 +66,12 @@ const CreatePost = () => {
 			reader.readAsDataURL(file);
 		}
 	};
-  
-  const handleEmojiClick = (emojiData) => {
+
+	const handleEmojiClick = (emojiData) => {
 		setText((prev) => prev + emojiData.emoji);
 	};
 
-  useEffect(() => {
+	useEffect(() => {
 		const handleClickOutside = (event) => {
 			if (
 				emojiPickerRef.current &&
@@ -86,7 +86,7 @@ const CreatePost = () => {
 		};
 	}, []);
 
-  	// ⌨️ Handle Enter key submission
+	// ⌨️ Handle Enter key submission
 	const handleKeyDown = (e) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault(); // prevent newline
@@ -94,7 +94,7 @@ const CreatePost = () => {
 		}
 	};
 
-  return (
+	return (
 		<div className='flex p-4 items-start gap-4 border-b border-gray-700 relative'>
 			<div className='w-8 h-8 rounded-full overflow-hidden'>
 				<img
@@ -123,8 +123,8 @@ const CreatePost = () => {
 						<img src={img} className='w-full mx-auto h-72 object-contain rounded' />
 					</div>
 				)}
-        
-        <div className='flex justify-between border-t py-2 border-t-gray-700 relative'>
+
+				<div className='flex justify-between border-t py-2 border-t-gray-700 relative'>
 					<div className='flex gap-2 items-center relative'>
 						<CiImageOn
 							className='fill-primary w-6 h-6 cursor-pointer'

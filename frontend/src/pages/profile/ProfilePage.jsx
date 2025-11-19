@@ -54,27 +54,6 @@ const ProfilePage = () => {
     },
   });
 
-  const { data: feedPosts, isLoading: isFeedLoading } = useQuery({
-    queryKey: ["feedPosts", feedType, username],
-    queryFn: async () => {
-      try {
-        const endpoint =
-          feedType === "posts"
-            ? `/api/posts/user/${username}`
-            : `/api/posts/likes/${user._id}`;
-
-        const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Something went wrong");
-        return data;
-      } catch (error) {
-        throw new Error(error.message);
-      }
-    },
-    enabled: !!user, // This query will only run after the user profile has been loaded
-  });
 
   const { isUpdatingProfile, updateProfile } = useUpdateUserProfile();
   const queryClient = useQueryClient();
@@ -306,8 +285,12 @@ const ProfilePage = () => {
               </div>
             </>
           )}
-
-          <Posts posts={feedPosts} isLoading={isFeedLoading} />
+          <Posts
+            posts={
+              feedType === "posts" ? user?.posts || [] : user?.likedPosts || []
+            }
+            isLoading={isLoading}
+          />
         </div>
 
         <UserListModal
