@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import transporter from "../config/nodemailer.js";
+import cloudinary from "../lib/utils/cloudinary.js";
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 
 const isPasswordTooSimilar = (password, username, fullName, email) => {
@@ -21,7 +22,7 @@ const isPasswordTooSimilar = (password, username, fullName, email) => {
 };
 export const signup = async (req, res) => {
   try {
-    const { username, fullName, email, password } = req.body;
+    const { username, fullName, email, password, profileImg } = req.body;
 
     if (!username || !fullName || !email || !password)
       return res.status(400).json({ error: "All fields are required" });
@@ -40,35 +41,34 @@ export const signup = async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
 
     const salt = await bcrypt.genSalt(10);
-		const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-		// Step 3: Upload image to Cloudinary (if exists)
-		let uploadedProfileImg = "";
-		if (profileImg) {
-			console.log("Uploading image...");
-			const uploadRes = await cloudinary.uploader.upload(profileImg, {
-				folder: "user_profiles",
-			});
-			uploadedProfileImg = uploadRes.secure_url;
-			console.log("Uploaded Image URL:", uploadedProfileImg);
-		}
+    // Step 3: Upload image to Cloudinary (if provided)
+    let uploadedProfileImg = "";
+    if (profileImg) {
+      const uploadRes = await cloudinary.uploader.upload(profileImg, {
+        folder: "user_profiles",
+      });
+      uploadedProfileImg = uploadRes.secure_url;
+    }
 
-		// Step 4: Create user
-		const newUser = new User({
-			fullName,
-			username,
-			email,
-			password: hashedPassword,
-			profileImg: uploadedProfileImg,
-		});
+    // Step 4: Create user
+    const newUser = new User({
+      fullName,
+      username,
+      email,
+      password: hashedPassword,
+      profileImg: uploadedProfileImg,
+    });
 
-		await newUser.save();
+    await newUser.save();
 
-		generateTokenAndSetCookie(newUser._id, res);
+    // Set auth cookie
+    generateTokenAndSetCookie(newUser._id, res);
 
-    res.status(201).json({ message: "Signup successful", userId: user._id });
+    res.status(201).json({ message: "Signup successful", userId: newUser._id });
   } catch (err) {
-    console.error("Signup error:", err.message);
+    console.log("Signup error:", err.message);
     res.status(500).json({ error: "Server Error" });
   }
 };
