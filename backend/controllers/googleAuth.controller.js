@@ -45,8 +45,8 @@ export const googleCallback = (req, res, next) => {
       res.cookie("jwt", token, {
         maxAge: 15 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        sameSite: "Lax",
-        secure: false,
+        sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax",
+        secure: process.env.NODE_ENV === 'production',
       });
 
       console.log("✅ Cookie set, redirecting to dashboard");
