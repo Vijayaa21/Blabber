@@ -73,45 +73,60 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-	try {
-		const { username, password } = req.body;
-		const user = await User.findOne({ username });
-		const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
+  try {
+    // Support both `{ username, password }` and `{ emailOrUsername, password }` payloads
+    const { username, password, emailOrUsername } = req.body;
+    const identifier = (username || emailOrUsername || "").toString().trim();
 
-		if (!user || !isPasswordCorrect) {
-			return res.status(400).json({ error: "Invalid username or password" });
-		}
+    if (!identifier || !password) {
+      return res.status(400).json({ error: "Username/email and password are required" });
+    }
 
-		// ✅ Set the cookie with JWT securely
-		generateTokenAndSetCookie(user._id, res);
+    const user = await User.findOne({ $or: [{ username: identifier }, { email: identifier }] });
+    const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-		res.status(200).json({
-			_id: user._id,
-			fullName: user.fullName,
-			username: user.username,
-			email: user.email,
-			followers: user.followers,
-			following: user.following,
-			profileImg: user.profileImg,
-			coverImg: user.coverImg,
-		});
-	} catch (error) {
-		console.log("Error in login controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
-	}
+    if (!user || !isPasswordCorrect) {
+      return res.status(400).json({ error: "Invalid username or password" });
+    }
+
+    // Set the auth cookie
+    generateTokenAndSetCookie(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      username: user.username,
+      email: user.email,
+      followers: user.followers,
+      following: user.following,
+      profileImg: user.profileImg,
+      coverImg: user.coverImg,
+    });
+  } catch (error) {
+    console.log("Error in login controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 
 export const logout = (req, res) => {
   try{
-        res.cookie('jwt','',{maxAge:0});
-        console.log("User logged out");
-        res.status(200).json({message:"User logged out"});
-    
-    } catch (error) {
-        console.log("Error in logout controller", error.message );
-    }
-};
+        const isProd = process.env.NODE_ENV === "production";
+        const cookieOptions = {
+          httpOnly: true,
+          secure: isProd,
+          sameSite: isProd ? "None" : "Lax",
+          path: "/",
+        };
+
+        // Clear the cookie set by `generateTokenAndSetCookie`
+        res.clearCookie("jwt", cookieOptions);
+        res.status(200).json({ message: "Logged out successfully" });
+        } catch (error) {
+          console.log("Error in logout controller", error.message);
+          res.status(500).json({ error: "Internal Server Error" });
+        }
+      };
 
 export const getMe = async (req, res) => {
 	try {
