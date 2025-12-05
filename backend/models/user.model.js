@@ -18,8 +18,18 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      minLength: 6,
+      validate: {
+        validator: function(v) {
+          // Only validate if password is provided (not null/undefined/empty)
+          if (v == null || v === "") return true;
+          return v.length >= 6;
+        },
+        message: "Password must be at least 6 characters long",
+      },
+    },
+    googleId: {
+      type: String,
+      sparse: true, // Allows multiple null values
     },
     profileImg: {
       type: String,

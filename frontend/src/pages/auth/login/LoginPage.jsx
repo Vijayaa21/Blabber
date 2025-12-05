@@ -4,6 +4,7 @@ import { MdOutlineMail, MdPassword } from "react-icons/md";
 import XSvg from "../../../components/svgs/X";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -45,6 +46,15 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleGoogleLogin = () => {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) {
+      alert("Google login is currently unavailable due to a configuration error. Please contact support.");
+      return;
+    }
+    window.location.href = `${apiUrl}/api/auth/google`;
+  };
+
   // Validation
   const isFormValid = useMemo(() => {
     const { username, password } = formData;
@@ -65,6 +75,25 @@ const LoginPage = () => {
         </div>
 
         <h1 className="text-3xl font-bold text-center mb-4">Log in</h1>
+
+        {/* Google Login Button */}
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 
+          bg-white text-gray-800 rounded-lg font-semibold 
+          hover:bg-gray-100 transition duration-200 
+          border border-gray-300 mb-6"
+        >
+          <FcGoogle className="text-xl" />
+          Continue with Google
+        </button>
+
+        {/* Divider */}
+        <div className="flex items-center mb-6">
+          <div className="flex-1 h-px bg-white/20"></div>
+          <span className="px-3 text-white/60 text-sm">or</span>
+          <div className="flex-1 h-px bg-white/20"></div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-3 border border-white/20 rounded-lg px-4 py-2 bg-white/5">
@@ -118,7 +147,7 @@ const LoginPage = () => {
         {/* Forgot Password flow removed */}
 
         <div className="text-center mt-6 text-white/80">
-          <p>Don’t have an account?</p>
+          <p>Don't have an account?</p>
           <Link
             to="/signup"
             className="inline-block mt-2 text-[#b99aff] hover:underline"
