@@ -3,7 +3,6 @@
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 <p align="center">
- <img src="https://img.shields.io/badge/GirlScript%20Summer%20of%20Code-2025-orange?style=for-the-badge" />
  <img src="https://img.shields.io/github/license/Vijayaa21/Blabber" alt="License"> 
  <a href="https://github.com/Vijayaa21/Blabber"><img src="https://badges.frapsoft.com/os/v1/open-source.svg?v=103" /></a>
  </p>
@@ -88,24 +87,6 @@ If you find this project useful or interesting, consider **starring** 🌟 the r
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-![GSSoC Logo](/Blabber/frontend/public/gssoc%20logo.png)
-
-🌟 **Exciting News...**
-
-🚀 This project is now an official part of GirlScript Summer of Code – GSSoC'25! 💃🎉💻 We're thrilled to welcome contributors from all over India and beyond to collaborate, build, and grow *Blabber!* Let’s make learning and career development smarter – together! 🌟👨‍💻👩‍💻
-
-👩‍💻 GSSoC is one of India’s **largest 3-month-long open-source programs** that encourages developers of all levels to contribute to real-world projects 🌍 while learning, collaborating, and growing together. 🌱
-
-🌈 With **mentorship, community support**, and **collaborative coding**, it's the perfect platform for developers to:
-
-- ✨ Improve their skills
-- 🤝 Contribute to impactful projects
-- 🏆 Get recognized for their work
-- 📜 Receive certificates and swag!
-
-🎉 **I can’t wait to welcome new contributors** from GSSoC 2025 to this Blabber project family! Let's build, learn, and grow together — one commit at a time. 🔥👨‍💻👩‍💻
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 **⚙️ Getting Started Locally**
 
@@ -361,15 +342,6 @@ This project is licensed under the MIT License - see the [`License`](https://git
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-<h2 align="center">👨‍🏫Mentors – Blabber (GSSoC'25)</h2>
-
-| Role          | Name               | GitHub Profile                                      | LinkedIn Profile                                                        |
-| ------------- | ------------------ | --------------------------------------------------- | ----------------------------------------------------------------------- |
-| Mentor 1 | Nandini Pandey |  [nytrixis](https://github.com/nytrixis) | [nytrixis](https://www.linkedin.com/in/nytrixis/) |
-| Mentor 2 | Sriman.H |  [srimanh](https://github.com/srimanh) | [srimanh](https://www.linkedin.com/in/srimanh/) |
-| Mentor 3 | Mohit yadav |  [mont-y-001](https://github.com/mont-y-001) | [monty001](https://www.linkedin.com/in/monty001/) |
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 <h1 align="center"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" /> Give us a Star and let's make magic! <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" /></h1>
 
