@@ -13,6 +13,9 @@ import {
   deleteComment,
   getPostById,
   editComment,
+  bookmarkPost,
+  getBookmarkedPosts,
+  repostPost,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
@@ -20,9 +23,12 @@ const router = express.Router();
 router.get("/all", protectRoute, getAllPosts);
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/likes/:id", protectRoute, getLikedPosts);
+router.get("/bookmarks/:id", protectRoute, getBookmarkedPosts);
 router.get("/user/:username", protectRoute, getUserPosts);
 router.post("/create", protectRoute, createPost);
 router.post("/like/:id", protectRoute, likeUnlikePost);
+router.post("/bookmark/:id", protectRoute, bookmarkPost);
+router.post("/repost/:id", protectRoute, repostPost);
 router.post("/comment/:id", protectRoute, commentOnPost);
 router.put("/:postId/comment/:commentId", protectRoute, editComment);
 router.delete("/:id", protectRoute, deletePost);

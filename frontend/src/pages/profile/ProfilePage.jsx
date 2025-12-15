@@ -16,6 +16,7 @@ import { formatMemberSinceDate } from "../../utils/date";
 
 import useFollow from "../../hooks/useFollow";
 import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
+import { getProfileImageUrl } from "../../utils/avatar";
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -129,7 +130,7 @@ const ProfilePage = () => {
 							<div className='absolute -bottom-14 left-6 z-10'>
 								<div className='relative w-[110px] h-[110px] rounded-full border-[4px] border-black overflow-hidden group/avatar shadow-lg'>
 									<img
-									src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+									src={profileImg || getProfileImageUrl(user?.profileImg, user?.username)}
 									alt="Profile"
 									className='w-full h-full object-cover'
 									/>

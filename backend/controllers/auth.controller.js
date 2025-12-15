@@ -2,139 +2,173 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import cloudinary from "../lib/utils/cloudinary.js";
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
+import { 
+  HTTP_STATUS, 
+  ERROR_MESSAGES, 
+  SUCCESS_MESSAGES,
+  COOKIE_CONFIG 
+} from "../lib/utils/constants.js";
+import { 
+  sendSuccess, 
+  sendCreated, 
+  sendError, 
+  sendMessage, 
+  sendBadRequest 
+} from "../lib/utils/response.js";
+import { isPasswordTooSimilar, isValidEmail } from "../lib/utils/validation.js";
+import { asyncHandler } from "../middleware/errorHandler.js";
 
-const isPasswordTooSimilar = (password, username, fullName, email) => {
-  const loweredPassword = password.toLowerCase();
-  const loweredUsername = username.toLowerCase();
-  const loweredEmail = email.toLowerCase();
-  const loweredFullNameParts = fullName.toLowerCase().split(/\s+/);
-  if (loweredPassword.includes(loweredUsername) || loweredPassword.includes(loweredEmail)) {
-    return true;
+/**
+ * @desc    Register a new user
+ * @route   POST /api/auth/signup
+ * @access  Public
+ */
+export const signup = asyncHandler(async (req, res) => {
+  const { username, fullName, email, password, profileImg } = req.body;
+
+  // Validate required fields
+  if (!username || !fullName || !email || !password) {
+    return sendBadRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
   }
-  for (let part of loweredFullNameParts) {
-    if (part.length >= 3 && loweredPassword.includes(part)) {
-      return true;
-    }
+
+  // Validate email format
+  if (!isValidEmail(email)) {
+    return sendBadRequest(res, ERROR_MESSAGES.INVALID_EMAIL);
   }
 
-  return false;
-};
-export const signup = async (req, res) => {
-  try {
-    const { username, fullName, email, password, profileImg } = req.body;
+  // Validate password strength
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(password)) {
+    return sendBadRequest(res, 
+      "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character"
+    );
+  }
 
-    if (!username || !fullName || !email || !password)
-      return res.status(400).json({ error: "All fields are required" });
+  // Check password similarity
+  if (isPasswordTooSimilar(password, username, email)) {
+    return sendBadRequest(res, ERROR_MESSAGES.PASSWORD_TOO_SIMILAR);
+  }
 
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(password)) {
-  return res.status(400).json({
-    error: "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character",
+  // Check if user already exists
+  const userExists = await User.findOne({ $or: [{ email }, { username }] });
+  if (userExists) {
+    const field = userExists.email === email ? "Email" : "Username";
+    return sendBadRequest(res, `${field} is already taken`);
+  }
+
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Upload profile image to Cloudinary (if provided)
+  let uploadedProfileImg = "";
+  if (profileImg) {
+    const uploadRes = await cloudinary.uploader.upload(profileImg, {
+      folder: "user_profiles",
+    });
+    uploadedProfileImg = uploadRes.secure_url;
+  }
+
+  // Create new user
+  const newUser = new User({
+    fullName,
+    username,
+    email,
+    password: hashedPassword,
+    profileImg: uploadedProfileImg,
   });
+
+  await newUser.save();
+
+  // Set auth cookie
+  generateTokenAndSetCookie(newUser._id, res);
+
+  return sendCreated(res, {
+    _id: newUser._id,
+    fullName: newUser.fullName,
+    username: newUser.username,
+    email: newUser.email,
+    profileImg: newUser.profileImg || newUser.avatarUrl,
+    coverImg: newUser.coverImg,
+    followers: newUser.followers,
+    following: newUser.following,
+  });
+});
+
+/**
+ * @desc    Login user
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
+export const login = asyncHandler(async (req, res) => {
+  // Support both `{ username, password }` and `{ emailOrUsername, password }` payloads
+  const { username, password, emailOrUsername } = req.body;
+  const identifier = (username || emailOrUsername || "").toString().trim();
+
+  if (!identifier || !password) {
+    return sendBadRequest(res, "Username/email and password are required");
   }
-    if (isPasswordTooSimilar(password, username, fullName, email)) {
-      return res.status(400).json({error: "Password cannot contain parts of username, full name, or email"});
-    }
 
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
-    if (userExists)
-      return res.status(400).json({ error: "User already exists" });
+  const user = await User.findOne({ 
+    $or: [{ username: identifier }, { email: identifier }] 
+  });
+  
+  const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Step 3: Upload image to Cloudinary (if provided)
-    let uploadedProfileImg = "";
-    if (profileImg) {
-      const uploadRes = await cloudinary.uploader.upload(profileImg, {
-        folder: "user_profiles",
-      });
-      uploadedProfileImg = uploadRes.secure_url;
-    }
-
-    // Step 4: Create user
-    const newUser = new User({
-      fullName,
-      username,
-      email,
-      password: hashedPassword,
-      profileImg: uploadedProfileImg,
-    });
-
-    await newUser.save();
-
-    // Set auth cookie
-    generateTokenAndSetCookie(newUser._id, res);
-
-    res.status(201).json({ message: "Signup successful", userId: newUser._id });
-  } catch (err) {
-    console.log("Signup error:", err.message);
-    res.status(500).json({ error: "Server Error" });
+  if (!user || !isPasswordCorrect) {
+    return sendBadRequest(res, ERROR_MESSAGES.INVALID_CREDENTIALS);
   }
-};
 
-export const login = async (req, res) => {
-  try {
-    // Support both `{ username, password }` and `{ emailOrUsername, password }` payloads
-    const { username, password, emailOrUsername } = req.body;
-    const identifier = (username || emailOrUsername || "").toString().trim();
+  // Set the auth cookie
+  generateTokenAndSetCookie(user._id, res);
 
-    if (!identifier || !password) {
-      return res.status(400).json({ error: "Username/email and password are required" });
-    }
+  return sendSuccess(res, {
+    _id: user._id,
+    fullName: user.fullName,
+    username: user.username,
+    email: user.email,
+    followers: user.followers,
+    following: user.following,
+    profileImg: user.profileImg || user.avatarUrl,
+    coverImg: user.coverImg,
+    bio: user.bio,
+    link: user.link,
+  });
+});
 
-    const user = await User.findOne({ $or: [{ username: identifier }, { email: identifier }] });
-    const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
-
-    if (!user || !isPasswordCorrect) {
-      return res.status(400).json({ error: "Invalid username or password" });
-    }
-
-    // Set the auth cookie
-    generateTokenAndSetCookie(user._id, res);
-
-    res.status(200).json({
-      _id: user._id,
-      fullName: user.fullName,
-      username: user.username,
-      email: user.email,
-      followers: user.followers,
-      following: user.following,
-      profileImg: user.profileImg,
-      coverImg: user.coverImg,
-    });
-  } catch (error) {
-    console.log("Error in login controller", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-
+/**
+ * @desc    Logout user
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
 export const logout = (req, res) => {
-  try{
-        const isProd = process.env.NODE_ENV === "production";
-        const cookieOptions = {
-          httpOnly: true,
-          secure: isProd,
-          sameSite: isProd ? "None" : "Lax",
-          path: "/",
-        };
+  try {
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+    };
 
-        // Clear the cookie set by `generateTokenAndSetCookie`
-        res.clearCookie("jwt", cookieOptions);
-        res.status(200).json({ message: "Logged out successfully" });
-        } catch (error) {
-          console.log("Error in logout controller", error.message);
-          res.status(500).json({ error: "Internal Server Error" });
-        }
-      };
-
-export const getMe = async (req, res) => {
-	try {
-		const user = await User.findById(req.user._id).select("-password");
-		res.status(200).json(user);
-	} catch (error) {
-		console.log("Error in getMe controller", error.message);
-		res.status(500).json({ error: "Internal Server Error" });
-	}
+    res.clearCookie(COOKIE_CONFIG.NAME, cookieOptions);
+    return sendMessage(res, SUCCESS_MESSAGES.LOGOUT_SUCCESS);
+  } catch (error) {
+    console.error("Error in logout controller:", error.message);
+    return sendError(res, ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
+  }
 };
+
+/**
+ * @desc    Get current user profile
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
+export const getMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+  
+  if (!user) {
+    return sendError(res, ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  }
+
+  return sendSuccess(res, user);
+});
 
