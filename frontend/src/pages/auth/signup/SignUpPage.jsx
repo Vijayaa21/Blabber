@@ -6,9 +6,9 @@ import { FaUser, FaEye, FaEyeSlash } from "react-icons/fa";
 import XSvg from "../../../components/svgs/X";
 import { MdOutlineMail, MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+import { PLACEHOLDER_AVATAR } from "../../../utils/avatar";
 
-const defaultProfile =
-  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+const defaultProfile = PLACEHOLDER_AVATAR;
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({

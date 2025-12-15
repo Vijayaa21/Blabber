@@ -19,6 +19,18 @@ const postSchema = new mongoose.Schema({
             ref: "User"
         }
     ],
+    bookmarks: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ],
+    reposts: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ],
     comments: [
         {
             text: {
@@ -30,12 +42,20 @@ const postSchema = new mongoose.Schema({
                 ref: "User",
                 required: true
             },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
         },
     ],
 },
 {timestamps: true}
 );
 
+// Index for faster queries
+postSchema.index({ user: 1, createdAt: -1 });
+postSchema.index({ likes: 1 });
+postSchema.index({ bookmarks: 1 });
 
 const Post = mongoose.model("Post", postSchema);
 export default Post;

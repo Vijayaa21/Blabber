@@ -1,53 +1,84 @@
 @import "tailwindcss";
+
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0f172a; /* match your page bg */
+  background-color: #0B0C15;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom scrollbar for main content */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(123, 47, 247, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 47, 247, 0.5);
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(123, 47, 247, 0.3);
 }
 
 @plugin "daisyui/theme" {
-  name: "dim";
+  name: "nebula";
   default: true;
-  prefersdark: false;
+  prefersdark: true;
   color-scheme: "dark";
 
-  --color-base-100: #0f0c29; /* Deep Blue */
-  --color-base-200: #302b63; /* Indigo Base */
-  --color-base-300: #24243e; /* Blue-Violet Overlay */
-  --color-base-content: #f1efff; /* Soft text */
+  --color-base-100: #0B0C15;
+  --color-base-200: #12131f;
+  --color-base-300: #1a1b2e;
+  --color-base-content: #f1f5f9;
 
-  --color-primary: #7b2ff7; /* Vivid Purple */
-  --color-primary-content: #fefaff; /* Light text on purple */
+  --color-primary: #7b2ff7;
+  --color-primary-content: #ffffff;
 
-  --color-secondary: #4a00e0; /* Deep Indigo */
+  --color-secondary: #6366f1;
   --color-secondary-content: #ffffff;
 
-  --color-accent: #8e2de2; /* Purple Gradient Edge */
+  --color-accent: #8b5cf6;
   --color-accent-content: #ffffff;
 
-  --color-neutral: #0f0c29;
-  --color-neutral-content: #fefefe;
+  --color-neutral: #1e293b;
+  --color-neutral-content: #f1f5f9;
 
-  --color-info: #4a6cf7;
-  --color-info-content: #e9f3ff;
+  --color-info: #3b82f6;
+  --color-info-content: #ffffff;
 
-  --color-success: #43e97b;
+  --color-success: #10b981;
   --color-success-content: #ffffff;
 
-  --color-warning: #f5af19;
+  --color-warning: #f59e0b;
   --color-warning-content: #1e1e1e;
 
-  --color-error: #ff4e50;
-  --color-error-content: #fff1f1;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
 
-  --radius-selector: 0rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.5rem;
 
   --border: 1px;
   --depth: 1;
-  --noise: 1;
+  --noise: 0;
 }
