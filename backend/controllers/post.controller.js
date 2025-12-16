@@ -16,15 +16,15 @@ import { asyncHandler } from "../middleware/errorHandler.js";
 // Helper function to add likeCount to posts
 const addLikeCount = (posts) => {
   return posts.map((post) => ({
-    ...post.toObject(),
-    likeCount: post.likes.length,
+    ...post,
+    likeCount: post.likes?.length || 0,
   }));
 };
 
-// Common populate options for posts
+// Common populate options for posts - only select needed fields
 const postPopulateOptions = [
-  { path: "user", select: "-password" },
-  { path: "comments.user", select: "-password" },
+  { path: "user", select: "username fullName profileImg" },
+  { path: "comments.user", select: "username fullName profileImg" },
 ];
 
 /**
@@ -99,30 +99,31 @@ export const commentOnPost = asyncHandler(async (req, res) => {
     return sendBadRequest(res, ERROR_MESSAGES.COMMENT_EMPTY);
   }
 
-  const post = await Post.findById(postId);
+  // Use findOneAndUpdate for atomic operation - faster than find + save
+  const comment = { user: userId, text, createdAt: new Date() };
+  const post = await Post.findByIdAndUpdate(
+    postId,
+    { $push: { comments: comment } },
+    { new: true }
+  )
+    .populate(postPopulateOptions)
+    .lean();
+
   if (!post) {
     return sendNotFound(res, ERROR_MESSAGES.POST_NOT_FOUND);
   }
 
-  const comment = { user: userId, text };
-  post.comments.push(comment);
-  await post.save();
-
-  // Send notification for comment (don't notify yourself)
-  if (post.user.toString() !== userId.toString()) {
-    const notification = new Notification({
+  // Send notification asynchronously (don't wait)
+  if (post.user._id.toString() !== userId.toString()) {
+    Notification.create({
       from: userId,
-      to: post.user,
+      to: post.user._id,
       type: "comment",
       post: postId,
-    });
-    await notification.save();
+    }).catch(() => {}); // Fire and forget
   }
 
-  // Re-fetch the post with populated comments
-  const updatedPost = await Post.findById(postId).populate(postPopulateOptions);
-
-  return sendSuccess(res, updatedPost);
+  return sendSuccess(res, post.comments);
 });
 
 /**
@@ -134,43 +135,40 @@ export const likeUnlikePost = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { id: postId } = req.params;
 
-  const post = await Post.findById(postId);
+  // Use findOne with lean for faster read
+  const post = await Post.findById(postId).select("likes user").lean();
   if (!post) {
     return sendNotFound(res, ERROR_MESSAGES.POST_NOT_FOUND);
   }
 
-  const userLikedPost = post.likes.includes(userId);
+  const userLikedPost = post.likes.some(id => id.toString() === userId.toString());
 
   if (userLikedPost) {
-    // Unlike post
+    // Unlike post - parallel updates
     await Promise.all([
       Post.updateOne({ _id: postId }, { $pull: { likes: userId } }),
       User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } }),
     ]);
 
-    const updatedLikes = post.likes.filter(
-      (id) => id.toString() !== userId.toString()
-    );
-    return sendSuccess(res, { likes: updatedLikes, likeCount: updatedLikes.length });
+    const updatedLikes = post.likes.filter(id => id.toString() !== userId.toString());
+    return sendSuccess(res, updatedLikes);
   } else {
-    // Like post
-    post.likes.push(userId);
+    // Like post - parallel updates
     await Promise.all([
+      Post.updateOne({ _id: postId }, { $push: { likes: userId } }),
       User.updateOne({ _id: userId }, { $push: { likedPosts: postId } }),
-      post.save(),
     ]);
 
-    // Create notification (don't notify yourself)
+    // Send notification asynchronously (don't wait)
     if (post.user.toString() !== userId.toString()) {
-      const notification = new Notification({
+      Notification.create({
         from: userId,
         to: post.user,
         type: "like",
-      });
-      await notification.save();
+      }).catch(() => {});
     }
 
-    return sendSuccess(res, { likes: post.likes, likeCount: post.likes.length });
+    return sendSuccess(res, [...post.likes, userId]);
   }
 });
 
@@ -182,11 +180,9 @@ export const likeUnlikePost = asyncHandler(async (req, res) => {
 export const getAllPosts = asyncHandler(async (req, res) => {
   const posts = await Post.find()
     .sort({ createdAt: -1 })
-    .populate(postPopulateOptions);
-
-  if (posts.length === 0) {
-    return sendSuccess(res, []);
-  }
+    .limit(50) // Limit for performance
+    .populate(postPopulateOptions)
+    .lean();
 
   return sendSuccess(res, addLikeCount(posts));
 });
@@ -199,13 +195,14 @@ export const getAllPosts = asyncHandler(async (req, res) => {
 export const getLikedPosts = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("likedPosts").lean();
   if (!user) {
     return sendNotFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
-    .populate(postPopulateOptions);
+    .populate(postPopulateOptions)
+    .lean();
 
   return sendSuccess(res, addLikeCount(likedPosts));
 });
@@ -217,14 +214,16 @@ export const getLikedPosts = asyncHandler(async (req, res) => {
  */
 export const getFollowingPosts = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("following").lean();
   if (!user) {
     return sendNotFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const feedPosts = await Post.find({ user: { $in: user.following } })
     .sort({ createdAt: -1 })
-    .populate(postPopulateOptions);
+    .limit(50)
+    .populate(postPopulateOptions)
+    .lean();
 
   return sendSuccess(res, addLikeCount(feedPosts));
 });
@@ -237,14 +236,15 @@ export const getFollowingPosts = asyncHandler(async (req, res) => {
 export const getUserPosts = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
-  const user = await User.findOne({ username });
+  const user = await User.findOne({ username }).select("_id").lean();
   if (!user) {
     return sendNotFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const posts = await Post.find({ user: user._id })
     .sort({ createdAt: -1 })
-    .populate(postPopulateOptions);
+    .populate(postPopulateOptions)
+    .lean();
 
   return sendSuccess(res, addLikeCount(posts));
 });
@@ -327,15 +327,17 @@ export const deleteComment = asyncHandler(async (req, res) => {
 export const getPostById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const post = await Post.findById(id).populate(postPopulateOptions);
+  const post = await Post.findById(id)
+    .populate(postPopulateOptions)
+    .lean();
 
   if (!post) {
     return sendNotFound(res, ERROR_MESSAGES.POST_NOT_FOUND);
   }
 
   return sendSuccess(res, {
-    ...post.toObject(),
-    likeCount: post.likes.length,
+    ...post,
+    likeCount: post.likes?.length || 0,
   });
 });
 
@@ -381,27 +383,28 @@ export const bookmarkPost = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { id: postId } = req.params;
 
-  const post = await Post.findById(postId);
+  const post = await Post.findById(postId).select("bookmarks").lean();
   if (!post) {
     return sendNotFound(res, ERROR_MESSAGES.POST_NOT_FOUND);
   }
 
-  const isBookmarked = post.bookmarks.includes(userId);
+  const isBookmarked = post.bookmarks?.some(id => id.toString() === userId.toString());
 
   if (isBookmarked) {
-    // Remove bookmark
+    // Remove bookmark - parallel updates
     await Promise.all([
       Post.updateOne({ _id: postId }, { $pull: { bookmarks: userId } }),
       User.updateOne({ _id: userId }, { $pull: { bookmarkedPosts: postId } }),
     ]);
 
+    const updatedBookmarks = post.bookmarks.filter(id => id.toString() !== userId.toString());
     return sendSuccess(res, { 
       bookmarked: false, 
       message: "Post removed from bookmarks",
-      bookmarkCount: post.bookmarks.length - 1
+      bookmarks: updatedBookmarks
     });
   } else {
-    // Add bookmark
+    // Add bookmark - parallel updates
     await Promise.all([
       Post.updateOne({ _id: postId }, { $push: { bookmarks: userId } }),
       User.updateOne({ _id: userId }, { $push: { bookmarkedPosts: postId } }),
@@ -410,7 +413,7 @@ export const bookmarkPost = asyncHandler(async (req, res) => {
     return sendSuccess(res, { 
       bookmarked: true, 
       message: "Post bookmarked",
-      bookmarkCount: post.bookmarks.length + 1
+      bookmarks: [...(post.bookmarks || []), userId]
     });
   }
 });
@@ -423,14 +426,15 @@ export const bookmarkPost = asyncHandler(async (req, res) => {
 export const getBookmarkedPosts = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("bookmarkedPosts").lean();
   if (!user) {
     return sendNotFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const bookmarkedPosts = await Post.find({ _id: { $in: user.bookmarkedPosts } })
     .sort({ createdAt: -1 })
-    .populate(postPopulateOptions);
+    .populate(postPopulateOptions)
+    .lean();
 
   return sendSuccess(res, addLikeCount(bookmarkedPosts));
 });
@@ -444,40 +448,40 @@ export const repostPost = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { id: postId } = req.params;
 
-  const post = await Post.findById(postId);
+  const post = await Post.findById(postId).select("reposts user").lean();
   if (!post) {
     return sendNotFound(res, ERROR_MESSAGES.POST_NOT_FOUND);
   }
 
-  const hasReposted = post.reposts.includes(userId);
+  const hasReposted = post.reposts?.some(id => id.toString() === userId.toString());
 
   if (hasReposted) {
     // Remove repost
     await Post.updateOne({ _id: postId }, { $pull: { reposts: userId } });
 
+    const updatedReposts = post.reposts.filter(id => id.toString() !== userId.toString());
     return sendSuccess(res, { 
       reposted: false, 
       message: "Repost removed",
-      repostCount: post.reposts.length - 1
+      reposts: updatedReposts
     });
   } else {
     // Add repost
     await Post.updateOne({ _id: postId }, { $push: { reposts: userId } });
 
-    // Create notification for repost (don't notify yourself)
+    // Send notification asynchronously (don't wait)
     if (post.user.toString() !== userId.toString()) {
-      const notification = new Notification({
+      Notification.create({
         from: userId,
         to: post.user,
         type: "repost",
-      });
-      await notification.save();
+      }).catch(() => {});
     }
 
     return sendSuccess(res, { 
       reposted: true, 
       message: "Post reposted",
-      repostCount: post.reposts.length + 1
+      reposts: [...(post.reposts || []), userId]
     });
   }
 });
