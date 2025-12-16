@@ -101,13 +101,37 @@ const CreatePost = () => {
 	};
 
 	return (
-		<div className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-3xl p-5 mb-8 shadow-xl">
-			<div className="flex gap-4">
-				<img
-					src={getProfileImageUrl(authUser?.profileImg, authUser?.username)}
-					alt="User"
-					className="w-12 h-12 rounded-2xl bg-slate-800 flex-shrink-0 object-cover ring-2 ring-violet-500/20"
+		<>
+			{/* Emoji Picker - rendered as portal-like fixed overlay */}
+			{showEmojiPicker && (
+				<div
+					ref={emojiPickerRef}
+					className="fixed z-[9999] shadow-2xl rounded-xl overflow-hidden"
+					style={{ 
+						top: '50%', 
+						left: '50%', 
+						transform: 'translate(-50%, -50%)' 
+					}}
+				>
+					<EmojiPicker onEmojiClick={handleEmojiClick} theme="dark" />
+				</div>
+			)}
+
+			{/* Backdrop when emoji picker is open */}
+			{showEmojiPicker && (
+				<div 
+					className="fixed inset-0 bg-black/50 z-[9998]"
+					onClick={() => setShowEmojiPicker(false)}
 				/>
+			)}
+
+			<div className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-3xl p-5 mb-8 shadow-xl">
+				<div className="flex gap-4">
+					<img
+						src={getProfileImageUrl(authUser?.profileImg, authUser?.username)}
+						alt="User"
+						className="w-12 h-12 rounded-2xl bg-slate-800 flex-shrink-0 object-cover ring-2 ring-violet-500/20"
+					/>
 				<form className="flex-1 flex flex-col" onSubmit={handleSubmit}>
 					<textarea
 						placeholder="What is happening?!"
@@ -134,7 +158,7 @@ const CreatePost = () => {
 						</div>
 					)}
 
-					<div className="flex items-center justify-between pt-4 border-t border-white/5 mt-4 relative">
+					<div className="flex items-center justify-between pt-4 border-t border-white/5 mt-4">
 						<div className="flex gap-1 text-violet-400">
 							<IconButton
 								icon={<CiImageOn size={22} />}
@@ -146,15 +170,6 @@ const CreatePost = () => {
 							/>
 							<IconButton icon={<HiOutlineDotsHorizontal size={20} />} />
 						</div>
-
-						{showEmojiPicker && (
-							<div
-								ref={emojiPickerRef}
-								className="absolute bottom-14 left-0 z-50"
-							>
-								<EmojiPicker onEmojiClick={handleEmojiClick} theme="dark" />
-							</div>
-						)}
 
 						<input
 							type="file"
@@ -183,6 +198,7 @@ const CreatePost = () => {
 				</form>
 			</div>
 		</div>
+		</>
 	);
 };
 
