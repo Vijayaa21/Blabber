@@ -99,11 +99,34 @@ const Post = ({ post, feedType }) => {
       }
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousPosts = queryClient.getQueryData(["posts", feedType]);
+      
+      // Optimistic update
+      queryClient.setQueryData(["posts", feedType], (oldData) => {
+        if (!oldData) return oldData;
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            const alreadyLiked = p.likes.includes(authUser._id);
+            return {
+              ...p,
+              likes: alreadyLiked
+                ? p.likes.filter((id) => id !== authUser._id)
+                : [...p.likes, authUser._id],
+            };
+          }
+          return p;
+        });
+      });
+      return { previousPosts };
     },
-    onError: (error) => {
+    onError: (error, _, context) => {
+      queryClient.setQueryData(["posts", feedType], context?.previousPosts);
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
     },
   });
 
@@ -122,12 +145,35 @@ const Post = ({ post, feedType }) => {
       }
       return data;
     },
-    onSuccess: (data) => {
-      toast.success(data.message);
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousPosts = queryClient.getQueryData(["posts", feedType]);
+      
+      // Optimistic update
+      queryClient.setQueryData(["posts", feedType], (oldData) => {
+        if (!oldData) return oldData;
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            const alreadyBookmarked = p.bookmarks?.includes(authUser._id);
+            return {
+              ...p,
+              bookmarks: alreadyBookmarked
+                ? (p.bookmarks || []).filter((id) => id !== authUser._id)
+                : [...(p.bookmarks || []), authUser._id],
+            };
+          }
+          return p;
+        });
+      });
+      return { previousPosts };
     },
-    onError: (error) => {
+    onError: (error, _, context) => {
+      queryClient.setQueryData(["posts", feedType], context?.previousPosts);
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
     },
   });
 
@@ -146,12 +192,34 @@ const Post = ({ post, feedType }) => {
       }
       return data;
     },
-    onSuccess: (data) => {
-      toast.success(data.message);
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousPosts = queryClient.getQueryData(["posts", feedType]);
+      
+      // Optimistic update
+      queryClient.setQueryData(["posts", feedType], (oldData) => {
+        if (!oldData) return oldData;
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            const alreadyReposted = p.reposts?.includes(authUser._id);
+            return {
+              ...p,
+              reposts: alreadyReposted
+                ? (p.reposts || []).filter((id) => id !== authUser._id)
+                : [...(p.reposts || []), authUser._id],
+            };
+          }
+          return p;
+        });
+      });
+      return { previousPosts };
     },
-    onError: (error) => {
+    onError: (error, _, context) => {
+      queryClient.setQueryData(["posts", feedType], context?.previousPosts);
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
     },
   });
 

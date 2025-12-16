@@ -45,39 +45,39 @@ export const followUnfollowUser = asyncHandler(async (req, res) => {
 		return sendBadRequest(res, ERROR_MESSAGES.CANNOT_FOLLOW_SELF);
 	}
 
+	// Use lean() for faster read, only select needed fields
 	const [userToModify, currentUser] = await Promise.all([
-		User.findById(id),
-		User.findById(currentUserId),
+		User.findById(id).select("_id followers").lean(),
+		User.findById(currentUserId).select("following").lean(),
 	]);
 
 	if (!userToModify || !currentUser) {
 		return sendNotFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
 	}
 
-	const isFollowing = currentUser.following.includes(id);
+	const isFollowing = currentUser.following?.some(fId => fId.toString() === id);
 
 	if (isFollowing) {
-		// Unfollow the user
+		// Unfollow the user - parallel updates
 		await Promise.all([
-			User.findByIdAndUpdate(id, { $pull: { followers: currentUserId } }),
-			User.findByIdAndUpdate(currentUserId, { $pull: { following: id } }),
+			User.updateOne({ _id: id }, { $pull: { followers: currentUserId } }),
+			User.updateOne({ _id: currentUserId }, { $pull: { following: id } }),
 		]);
 
 		return sendMessage(res, SUCCESS_MESSAGES.USER_UNFOLLOWED);
 	} else {
-		// Follow the user
+		// Follow the user - parallel updates
 		await Promise.all([
-			User.findByIdAndUpdate(id, { $push: { followers: currentUserId } }),
-			User.findByIdAndUpdate(currentUserId, { $push: { following: id } }),
+			User.updateOne({ _id: id }, { $push: { followers: currentUserId } }),
+			User.updateOne({ _id: currentUserId }, { $push: { following: id } }),
 		]);
 
-		// Send notification
-		const newNotification = new Notification({
+		// Send notification asynchronously (fire and forget)
+		Notification.create({
 			type: "follow",
 			from: currentUserId,
-			to: userToModify._id,
-		});
-		await newNotification.save();
+			to: id,
+		}).catch(() => {});
 
 		return sendMessage(res, SUCCESS_MESSAGES.USER_FOLLOWED);
 	}
@@ -91,7 +91,7 @@ export const followUnfollowUser = asyncHandler(async (req, res) => {
 export const getSuggestedUsers = asyncHandler(async (req, res) => {
 	const userId = req.user._id;
 
-	const usersFollowedByMe = await User.findById(userId).select("following");
+	const usersFollowedByMe = await User.findById(userId).select("following").lean();
 
 	const users = await User.aggregate([
 		{ $match: { _id: { $ne: userId } } },
@@ -100,7 +100,7 @@ export const getSuggestedUsers = asyncHandler(async (req, res) => {
 	]);
 
 	const filteredUsers = users.filter(
-		(user) => !usersFollowedByMe.following.includes(user._id)
+		(user) => !usersFollowedByMe.following?.some(fId => fId.toString() === user._id.toString())
 	);
 	const suggestedUsers = filteredUsers.slice(0, 4);
 

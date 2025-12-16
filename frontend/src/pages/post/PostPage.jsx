@@ -41,14 +41,29 @@ const PostPage = () => {
 			if (!res.ok) throw new Error(data.error || "Something went wrong");
 			return data;
 		},
-		onSuccess: (updatedLikes) => {
-			queryClient.setQueryData(["post", postId], (oldData) => ({
-				...oldData,
-				likes: updatedLikes,
-			}));
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ["post", postId] });
+			const previousPost = queryClient.getQueryData(["post", postId]);
+			
+			queryClient.setQueryData(["post", postId], (old) => {
+				if (!old) return old;
+				const alreadyLiked = old.likes?.includes(authUser?._id);
+				return {
+					...old,
+					likes: alreadyLiked
+						? old.likes.filter((id) => id !== authUser?._id)
+						: [...(old.likes || []), authUser?._id],
+				};
+			});
+			return { previousPost };
+		},
+		onError: (error, _, context) => {
+			queryClient.setQueryData(["post", postId], context?.previousPost);
+			toast.error(error.message);
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 		},
-		onError: (error) => toast.error(error.message),
 	});
 
 	const { mutate: bookmarkPost, isPending: isBookmarking } = useMutation({
@@ -61,16 +76,30 @@ const PostPage = () => {
 			if (!res.ok) throw new Error(data.error || "Something went wrong");
 			return data;
 		},
-		onSuccess: (data) => {
-			queryClient.setQueryData(["post", postId], (oldData) => ({
-				...oldData,
-				bookmarks: data.bookmarks,
-			}));
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ["post", postId] });
+			const previousPost = queryClient.getQueryData(["post", postId]);
+			
+			queryClient.setQueryData(["post", postId], (old) => {
+				if (!old) return old;
+				const alreadyBookmarked = old.bookmarks?.includes(authUser?._id);
+				return {
+					...old,
+					bookmarks: alreadyBookmarked
+						? (old.bookmarks || []).filter((id) => id !== authUser?._id)
+						: [...(old.bookmarks || []), authUser?._id],
+				};
+			});
+			return { previousPost };
+		},
+		onError: (error, _, context) => {
+			queryClient.setQueryData(["post", postId], context?.previousPost);
+			toast.error(error.message);
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 			queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-			toast.success(data.message);
 		},
-		onError: (error) => toast.error(error.message),
 	});
 
 	const { mutate: repostPost, isPending: isReposting } = useMutation({
@@ -83,15 +112,29 @@ const PostPage = () => {
 			if (!res.ok) throw new Error(data.error || "Something went wrong");
 			return data;
 		},
-		onSuccess: (data) => {
-			queryClient.setQueryData(["post", postId], (oldData) => ({
-				...oldData,
-				reposts: data.reposts,
-			}));
-			queryClient.invalidateQueries({ queryKey: ["posts"] });
-			toast.success(data.message);
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ["post", postId] });
+			const previousPost = queryClient.getQueryData(["post", postId]);
+			
+			queryClient.setQueryData(["post", postId], (old) => {
+				if (!old) return old;
+				const alreadyReposted = old.reposts?.includes(authUser?._id);
+				return {
+					...old,
+					reposts: alreadyReposted
+						? (old.reposts || []).filter((id) => id !== authUser?._id)
+						: [...(old.reposts || []), authUser?._id],
+				};
+			});
+			return { previousPost };
 		},
-		onError: (error) => toast.error(error.message),
+		onError: (error, _, context) => {
+			queryClient.setQueryData(["post", postId], context?.previousPost);
+			toast.error(error.message);
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
 	});
 
 	const { mutate: commentPost, isPending: isCommenting } = useMutation({
@@ -106,16 +149,43 @@ const PostPage = () => {
 			if (!res.ok) throw new Error(data.error || "Something went wrong");
 			return data;
 		},
-		onSuccess: (updatedComments) => {
-			queryClient.setQueryData(["post", postId], (oldData) => ({
-				...oldData,
-				comments: updatedComments,
-			}));
-			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ["post", postId] });
+			const previousPost = queryClient.getQueryData(["post", postId]);
+			
+			// Optimistically add comment
+			queryClient.setQueryData(["post", postId], (old) => {
+				if (!old) return old;
+				return {
+					...old,
+					comments: [
+						...(old.comments || []),
+						{
+							_id: `temp-${Date.now()}`,
+							text: comment,
+							user: authUser,
+							createdAt: new Date().toISOString(),
+						},
+					],
+				};
+			});
+			
+			const savedComment = comment;
 			setComment("");
+			return { previousPost, savedComment };
+		},
+		onError: (error, _, context) => {
+			queryClient.setQueryData(["post", postId], context?.previousPost);
+			setComment(context?.savedComment || "");
+			toast.error(error.message);
+		},
+		onSuccess: () => {
 			toast.success("Comment posted!");
 		},
-		onError: (error) => toast.error(error.message),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["post", postId] });
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
 	});
 
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
