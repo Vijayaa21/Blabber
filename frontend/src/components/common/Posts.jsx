@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FaUser } from "react-icons/fa";
 
-const Posts = ({ feedType, username, userId }) => {
+const Posts = ({ feedType, username, userId, posts: externalPosts }) => {
 	const getPostEndpoint = () => {
 		switch (feedType) {
 			case "forYou":
@@ -22,13 +22,16 @@ const Posts = ({ feedType, username, userId }) => {
 
 	const POST_ENDPOINT = getPostEndpoint();
 
+	// Skip fetching if external posts are provided (e.g., bookmarks page)
+	const shouldFetch = !externalPosts;
+
 	const {
-		data: posts,
+		data: fetchedPosts,
 		isLoading,
 		refetch,
 		isRefetching,
 	} = useQuery({
-		queryKey: ["posts"],
+		queryKey: ["posts", feedType, username, userId],
 		queryFn: async () => {
 			const res = await fetch(POST_ENDPOINT, {
 				credentials: "include",
@@ -41,15 +44,26 @@ const Posts = ({ feedType, username, userId }) => {
 
 			return data;
 		},
+		enabled: shouldFetch,
 	});
 
+	// Use external posts if provided, otherwise use fetched posts
+	const posts = externalPosts || fetchedPosts;
+
 	useEffect(() => {
-		refetch();
-	}, [feedType, refetch, username]);
+		if (shouldFetch) {
+			refetch();
+		}
+	}, [feedType, refetch, username, shouldFetch]);
+
+	// Sort posts by date (newest first)
+	const sortedPosts = posts ? [...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
+
+	const showLoading = shouldFetch && (isLoading || isRefetching);
 
 	return (
 		<>
-			{(isLoading || isRefetching) && (
+			{showLoading && (
 				<div className="columns-1 xl:columns-2 gap-5">
 					<PostSkeleton />
 					<PostSkeleton />
@@ -58,23 +72,25 @@ const Posts = ({ feedType, username, userId }) => {
 				</div>
 			)}
 
-			{!isLoading && !isRefetching && posts?.length === 0 && (
+			{!showLoading && sortedPosts.length === 0 && (
 				<div className="p-20 text-center text-slate-500 bg-slate-900/40 rounded-3xl border border-white/5">
 					<FaUser size={48} className="mx-auto mb-4 opacity-50" />
 					<p className="text-xl font-bold mb-2 text-white">
-						{feedType === "following" ? "Your Circle is Quiet" : "No Posts Yet"}
+						{feedType === "following" ? "Your Circle is Quiet" : feedType === "bookmarks" ? "No Bookmarks" : "No Posts Yet"}
 					</p>
 					<p>
 						{feedType === "following"
 							? "Follow more creators to see their posts here."
+							: feedType === "bookmarks"
+							? "Save posts to see them here."
 							: "Be the first to share something!"}
 					</p>
 				</div>
 			)}
 
-			{!isLoading && !isRefetching && posts && posts.length > 0 && (
+			{!showLoading && sortedPosts.length > 0 && (
 				<div className="columns-1 xl:columns-2 gap-5 space-y-5">
-					{posts.map((post) => (
+					{sortedPosts.map((post) => (
 						<div key={post._id} className="break-inside-avoid">
 							<Post post={post} feedType={feedType} />
 						</div>

@@ -2,7 +2,7 @@ import { FaRegComment, FaRegHeart, FaHeart, FaRegBookmark, FaBookmark } from "re
 import { BiRepost } from "react-icons/bi";
 import { HiOutlineShare, HiOutlineTrash, HiOutlineClipboard, HiOutlineLink } from "react-icons/hi";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
@@ -47,10 +47,8 @@ const ActionIcon = ({ icon, count, color, active, groupName, onClick, disabled }
 };
 
 const Post = ({ post, feedType }) => {
-  const [comment, setComment] = useState("");
-  const [isCommenting, setIsCommenting] = useState(false);
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
@@ -157,68 +155,7 @@ const Post = ({ post, feedType }) => {
     },
   });
 
-  const { mutate: postComment } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/posts/comment/${post._id}`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: comment }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
-    },
-    onMutate: async () => {
-      setIsCommenting(true);
-      await queryClient.cancelQueries({ queryKey: ["posts", feedType] });
-      const previousPosts = queryClient.getQueryData(["posts", feedType]);
-
-      queryClient.setQueryData(["posts", feedType], (oldData) => {
-        if (!oldData || !Array.isArray(oldData)) return oldData;
-        return oldData.map((p) => {
-          if (p._id === post._id) {
-            return {
-              ...p,
-              comments: [
-                ...p.comments,
-                {
-                  _id: `temp-${Date.now()}`,
-                  text: comment,
-                  user: authUser,
-                },
-              ],
-            };
-          }
-          return p;
-        });
-      });
-
-      return { previousPosts };
-    },
-    onError: (err, variables, context) => {
-      toast.error(err.message);
-      if (context?.previousPosts) {
-        queryClient.setQueryData(["posts", feedType], context.previousPosts);
-      }
-    },
-    onSettled: () => {
-      setIsCommenting(false);
-      setComment("");
-      queryClient.invalidateQueries({ queryKey: ["posts", feedType] });
-    },
-  });
-
   const handleDeletePost = () => deletePost();
-
-  const handlePostComment = (e) => {
-    e.preventDefault();
-    if (comment.trim().length === 0) return;
-    postComment();
-  };
 
   const handleLikePost = () => {
     if (isLiking) return;
@@ -365,7 +302,7 @@ const Post = ({ post, feedType }) => {
             count={post.comments.length}
             color="hover:text-blue-400"
             groupName="blue"
-            onClick={() => setIsCommentDialogOpen(true)}
+            onClick={() => navigate(`/post/${post._id}`)}
           />
           <ActionIcon
             icon={
@@ -452,87 +389,6 @@ const Post = ({ post, feedType }) => {
           </div>
         </div>
       </div>
-
-      {/* Comment Dialog */}
-      {isCommentDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl shadow-2xl max-w-md w-full mx-4 p-6 text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Comments</h3>
-              <button
-                className="text-slate-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition-colors"
-                onClick={() => setIsCommentDialogOpen(false)}
-                aria-label="Close comments dialog"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="max-h-72 overflow-y-auto mb-4 space-y-3">
-              {post.comments.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-8">
-                  No comments yet 🤔 Be the first one 😉
-                </p>
-              ) : (
-                post.comments.map((comment) => (
-                  <div
-                    key={comment._id}
-                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-white/5 transition-colors"
-                  >
-                    <img
-                      src={getProfileImageUrl(comment.user.profileImg, comment.user.username)}
-                      alt={`${comment.user.fullName} profile`}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-white/10"
-                    />
-                    <div>
-                      <div className="flex gap-2 items-center">
-                        <span className="font-bold text-sm">
-                          {comment.user.fullName}
-                        </span>
-                        <span className="text-slate-500 text-xs">
-                          @{comment.user.username}
-                        </span>
-                      </div>
-                      <p className="text-sm mt-1 text-slate-300">
-                        {comment.text}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <form onSubmit={handlePostComment} className="flex gap-3">
-              <textarea
-                className="flex-grow p-3 rounded-xl bg-slate-800/50 text-white resize-none border border-white/10 focus:outline-none focus:border-violet-500/50 placeholder-slate-500"
-                placeholder="Add a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={2}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if (comment.trim().length > 0) {
-                      handlePostComment(e);
-                    }
-                  }
-                }}
-              />
-              <button
-                type="submit"
-                disabled={isCommenting || comment.trim() === ""}
-                className={`px-5 py-2 rounded-xl font-bold text-sm self-end transition-all ${
-                  isCommenting || comment.trim() === ""
-                    ? "bg-slate-700 text-slate-400 cursor-not-allowed"
-                    : "bg-violet-600 hover:bg-violet-700 text-white"
-                }`}
-              >
-                {isCommenting ? <LoadingSpinner size="sm" /> : "Post"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
